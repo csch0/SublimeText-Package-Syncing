@@ -1,21 +1,21 @@
 import sublime, sublime_plugin
 
-import fnmatch, os, shutil
+import fnmatch, logging, os, shutil
+logger = logging.getLogger(__name__)
 
 try:
-	from .debug import logger
 	from .st2 import *
 except ValueError:
 	from st2 import *
-	from debug import logger
 
 def find_files(path):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	include_pattern = s.get("include_pattern", [])
 	ignore_pattern = s.get("ignore_pattern", []) + ["Package Syncing.sublime-settings"]
 
-	logger(1, "include_pattern", include_pattern)
-	logger(1, "ignore_pattern", ignore_pattern)
+	logger.debug("path %s", path)
+	logger.debug("include_pattern %s", include_pattern)
+	logger.debug("ignore_pattern %s", ignore_pattern)
 
 	resources = {}
 	for root, dir_names, file_names in os.walk(path):
@@ -51,8 +51,8 @@ def sync_push():
 	local_data = find_files(local_dir)
 	remote_data = find_files(remote_dir)
 
-	logger(2, local_data)
-	logger(2, remote_data)
+	logger.debug("%s", local_data)
+	logger.debug("%s", remote_data)
 
 	for key, value in local_data.items():
 		if key not in remote_data or int(value["version"]) > int(remote_data[key]["version"]):
@@ -61,8 +61,8 @@ def sync_push():
 				os.mkdir(target_dir)
 			shutil.copy2(value["path"], target_dir)
 			# Debug
-			logger(0, "%s --> %s" % (key, target_dir))
-			logger(1, "%s <-> %s" % (value["version"], remote_data[key]["version"] if key in remote_data else "None"))
+			logger.info("%s --> %s",  key, target_dir)
+			logger.info("%s <-> %s",  value["version"], remote_data[key]["version"] if key in remote_data else "None")
 
 
 def sync_pull(override = False):
@@ -82,8 +82,8 @@ def sync_pull(override = False):
 	local_data = find_files(local_dir)
 	remote_data = find_files(remote_dir)
 
-	logger(2, local_data)
-	logger(2, remote_data)
+	logger.debug("%s", local_data)
+	logger.debug("%s", remote_data)
 
 	for key, value in remote_data.items():
 		if key not in local_data or int(value["version"]) > int(local_data[key]["version"]) or override:
@@ -92,8 +92,8 @@ def sync_pull(override = False):
 				os.mkdir(target_dir)
 			shutil.copy2(value["path"], target_dir)
 			# Debug
-			logger(0, "%s --> %s" % (key, target_dir))
-			logger(1, "%s <-> %s" % (value["version"], local_data[key]["version"] if key in local_data else "None"))
+			logger.info("%s --> %s",  key, target_dir)
+			logger.info("%s <-> %s",  value["version"], local_data[key]["version"] if key in local_data else "None")
 
 	add_on_change_listener()
 
@@ -111,13 +111,13 @@ def find_settings(user = False):
 
 def add_on_change_listener():
 	for name in find_settings():
-		logger(2, "add_on_change_listener", name)
+		# logger.debug("add_on_change_listener %s", name)
 		s = sublime.load_settings(name)
 		s.clear_on_change("package_sync")
 		s.add_on_change("package_sync", sync_push)
 
 def clear_on_change_listener():
 	for name in find_settings():
-		logger(2, "clear_on_change_listener", name)
+		# logger.debug("clear_on_change_listener %s", name)
 		s = sublime.load_settings(name)
 		s.clear_on_change("package_sync")

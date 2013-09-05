@@ -1,6 +1,7 @@
 import sublime, sublime_plugin
 
-import os.path
+import os.path, logging
+logging.basicConfig(level = logging.INFO, format="[%(asctime)s - %(levelname)s - %(name)s] %(message)s")
 
 try:
 	from .package_syncing.tools import *
@@ -96,10 +97,10 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 
 		self.window.show_input_panel("Sync Folder", sync_folder, on_done, None, None)
 
+def plugin_loaded():
+	sync_pull()
+	sync_push()
+	add_on_change_listener()
 
-# def plugin_loaded():
-# 	sync_pull()
-# 	sync_push()
-# 	add_on_change_listener()
-
-# sync_push()
+if int(sublime.version()) < 3000:
+	plugin_loaded()
