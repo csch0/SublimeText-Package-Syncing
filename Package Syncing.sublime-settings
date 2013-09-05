@@ -1,0 +1,18 @@
+{
+	// Sync location
+	"sync_folder": "",
+
+	//
+	"include_pattern": [
+		"*.sublime-build",
+		"*.sublime-keymap",
+		"*.sublime-settings"
+	],
+
+	// The Package Syncing will be ignored by default,
+	// any other possible package can be adjusted here
+	"ignore_pattern": [
+		"*.DS_Store",
+		"Package Control.cache*"
+	]
+}
