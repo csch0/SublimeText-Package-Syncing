@@ -2,15 +2,19 @@ import sublime, sublime_plugin
 
 import os.path
 
-from .package_syncing.tools import *
+try:
+	from .package_syncing.tools import *
+except ValueError:
+	from package_syncing.tools import *
+
 
 class PkgSyncListnerCommand(sublime_plugin.EventListener):
 
-# 	def on_load(self, view):
-# 		sublime.set_timeout(lambda: sync_pull(), 500)
+	def on_load(self, view):
+		sublime.set_timeout(lambda: sync_pull(), 500)
 
-# 	def on_activated(self, view):
-# 		sublime.set_timeout(lambda: sync_pull(), 250)
+	def on_activated(self, view):
+		sublime.set_timeout(lambda: sync_pull(), 250)
 
 	def on_post_save(self, view):
 		sublime.set_timeout(lambda: sync_push(), 500)

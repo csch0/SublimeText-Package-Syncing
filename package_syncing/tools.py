@@ -1,9 +1,13 @@
 import sublime, sublime_plugin
 
-import datetime, fnmatch, functools, os, shutil
+import fnmatch, os, shutil
 
-from .debug import logger
-from .st2 import *
+try:
+	from .debug import logger
+	from .st2 import *
+except ValueError:
+	from st2 import *
+	from debug import logger
 
 def find_files(path):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
