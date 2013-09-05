@@ -10,6 +10,9 @@ def find_files(path):
 	include_pattern = s.get("include_pattern", [])
 	ignore_pattern = s.get("ignore_pattern", []) + ["Package Syncing.sublime-settings"]
 
+	logger(1, "include_pattern", include_pattern)
+	logger(1, "ignore_pattern", ignore_pattern)
+
 	resources = {}
 	for root, dir_names, file_names in os.walk(path):
 		for file_name in file_names:
@@ -17,13 +20,14 @@ def find_files(path):
 			rel_path = os.path.relpath(full_path, path)
 
 			# files_to_ignore
-			if any([fnmatch.fnmatch(rel_path.lower(), p.lower()) for p in ignore_pattern]):
-				continue
-			# include_pattern
-			if not any([fnmatch.fnmatch(rel_path.lower(), p) for p in include_pattern]):
+			if any([fnmatch.fnmatch(rel_path, p) for p in ignore_pattern]):
 				continue
 
-			resources[file_name] = {"version": os.path.getmtime(full_path), "path": full_path}
+			# include_pattern
+			if not any([fnmatch.fnmatch(rel_path, p) for p in include_pattern]):
+				continue
+
+			resources[rel_path] = {"version": os.path.getmtime(full_path), "path": full_path, "dir": os.path.dirname(rel_path)}
 
 	return resources
 
@@ -33,6 +37,13 @@ def sync_push():
 	local_dir = os.path.join(sublime.packages_path(), "User")
 	remote_dir = s.get("sync_folder")
 
+	if not s.get("sync"):
+		return
+
+	if not os.path.isdir(remote_dir):
+		sublime.status_message("Invalid Sync Folder \"%s\"" % remote_dir)
+		return
+
 	local_data = find_files(local_dir)
 	remote_data = find_files(remote_dir)
 
@@ -41,15 +52,26 @@ def sync_push():
 
 	for key, value in local_data.items():
 		if key not in remote_data or int(value["version"]) > int(remote_data[key]["version"]):
-			shutil.copy2(value["path"], remote_dir)
-			logger(0, "%s --> %s" % (key, remote_dir))
+			target_dir = os.path.join(remote_dir, value["dir"])
+			if not os.path.isdir(target_dir):
+				os.mkdir(target_dir)
+			shutil.copy2(value["path"], target_dir)
+			# Debug
+			logger(0, "%s --> %s" % (key, target_dir))
 			logger(1, "%s <-> %s" % (value["version"], remote_data[key]["version"] if key in remote_data else "None"))
 
 
-def sync_pull():
+def sync_pull(override = False):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
 	remote_dir = s.get("sync_folder")
+
+	if not s.get("sync"):
+		return
+
+	if not os.path.isdir(remote_dir):
+		sublime.status_message("Invalid Sync Folder \"%s\"" % remote_dir)
+		return
 
 	clear_on_change_listener()
 
@@ -60,9 +82,13 @@ def sync_pull():
 	logger(2, remote_data)
 
 	for key, value in remote_data.items():
-		if key not in local_data or int(value["version"]) > int(local_data[key]["version"]):
-			shutil.copy2(value["path"], local_dir)
-			logger(0, "%s --> %s" % (key, local_dir))
+		if key not in local_data or int(value["version"]) > int(local_data[key]["version"]) or override:
+			target_dir = os.path.join(local_dir, value["dir"])
+			if not os.path.isdir(target_dir):
+				os.mkdir(target_dir)
+			shutil.copy2(value["path"], target_dir)
+			# Debug
+			logger(0, "%s --> %s" % (key, target_dir))
 			logger(1, "%s <-> %s" % (value["version"], local_data[key]["version"] if key in local_data else "None"))
 
 	add_on_change_listener()

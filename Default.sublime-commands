@@ -1,18 +1,22 @@
 [
 	{
-		"caption": "Package Syncing: Set Sync Folder",
-		"command": "pkg_sync_set_folder"
+		"caption": "Package Syncing: Enable Syncing",
+		"command": "pkg_sync_enable"
 	},
 	{
-		"caption": "Package Syncing: Sync Now",
-		"command": "pkg_sync_sync"
+		"caption": "Package Syncing: Disable Syncing",
+		"command": "pkg_sync_disable"
 	},
 	{
-		"caption": "Package Syncing: Push",
+		"caption": "Package Syncing: Define Sync Folder",
+		"command": "pkg_sync_folder"
+	},
+	{
+		"caption": "Package Syncing: Push Settings",
 		"command": "pkg_sync_push"
 	},
 	{
-		"caption": "Package Syncing: Pull",
+		"caption": "Package Syncing: Pull Settings",
 		"command": "pkg_sync_pull"
 	}
 ]

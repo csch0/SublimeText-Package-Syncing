@@ -1,0 +1,43 @@
+[
+	{
+		"id": "tools",
+		"children":
+		[
+			{
+				"caption": "Packages",
+				"id": "packages",
+				"children":
+				[
+					{
+						"caption": "Package Syncing",
+						"children":
+						[
+							{
+								"caption": "Enable Syncing",
+								"command": "pkg_sync_enable"
+							},
+							{
+								"caption": "Disable Syncing",
+								"command": "pkg_sync_disable"
+							},
+							{ "caption": "-" },
+							{
+								"caption": "Define Sync Folder",
+								"command": "pkg_sync_folder"
+							},
+							{ "caption": "-" },
+							{
+								"caption": "Push Settings",
+								"command": "pkg_sync_push"
+							},
+							{
+								"caption": "Pull Settings",
+								"command": "pkg_sync_pull"
+							}
+						]
+					}
+				]
+			}
+		]
+	}
+]

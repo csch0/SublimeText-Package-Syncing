@@ -1,16 +1,17 @@
 {
-	// Sync location
+	// General sync settings like the location
+	"sync": true,
 	"sync_folder": "",
 
-	//
+	// Files to include in the sync, as long they do not mach the ignore pattern
 	"include_pattern": [
 		"*.sublime-build",
 		"*.sublime-keymap",
 		"*.sublime-settings"
 	],
 
-	// The Package Syncing will be ignored by default,
-	// any other possible package can be adjusted here
+	// Files to ignore when syncing, by default Package Syncing.sublime-settings is
+	// alsways excluded
 	"ignore_pattern": [
 		"*.DS_Store",
 		"Package Control.cache*"
