@@ -2,6 +2,7 @@ import sublime, sublime_plugin
 
 import fnmatch, logging, os, shutil
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 try:
 	from .st2 import *
@@ -10,25 +11,26 @@ except ValueError:
 
 def find_files(path):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
-	include_pattern = s.get("include_pattern", [])
-	ignore_pattern = s.get("ignore_pattern", []) + ["Package Syncing.sublime-settings"]
+	files_to_include = s.get("files_to_include", [])
+	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings"]
+	dirs_to_ignore = s.get("dirs_to_ignore", [])
 
 	logger.debug("path %s", path)
-	logger.debug("include_pattern %s", include_pattern)
-	logger.debug("ignore_pattern %s", ignore_pattern)
+	logger.debug("files_to_include %s", files_to_include)
+	logger.debug("files_to_ignore %s", files_to_ignore)
+	logger.debug("dirs_to_ignore %s", dirs_to_ignore)
 
 	resources = {}
 	for root, dir_names, file_names in os.walk(path):
+		[dir_names.remove(dir) for dir in dir_names if dir in dirs_to_ignore]
+
 		for file_name in file_names:
 			full_path = os.path.join(root, file_name)
 			rel_path = os.path.relpath(full_path, path)
 
-			# files_to_ignore
-			if any([fnmatch.fnmatch(rel_path, p) for p in ignore_pattern]):
-				continue
-
-			# include_pattern
-			if not any([fnmatch.fnmatch(rel_path, p) for p in include_pattern]):
+			include_matches = [fnmatch.fnmatch(rel_path, p) for p in files_to_include]
+			ignore_matches = [fnmatch.fnmatch(rel_path, p) for p in files_to_ignore]
+			if any(ignore_matches) and not any(include_matches):
 				continue
 
 			resources[rel_path] = {"version": os.path.getmtime(full_path), "path": full_path, "dir": os.path.dirname(rel_path)}

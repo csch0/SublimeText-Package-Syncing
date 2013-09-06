@@ -3,17 +3,21 @@
 	"sync": true,
 	"sync_folder": "",
 
-	// Files to include in the sync, as long they do not mach the ignore pattern
-	"include_pattern": [
+	// Files to include, as long they do not match a pattern in files_to_ignore
+	"files_to_include": [
 		"*.sublime-build",
 		"*.sublime-keymap",
 		"*.sublime-settings"
 	],
 
-	// Files to ignore when syncing, by default Package Syncing.sublime-settings is
-	// alsways excluded
-	"ignore_pattern": [
-		"*.DS_Store",
-		"Package Control.cache*"
+	// Files to ignore when syncing your data, Package Syncing.sublime-settings
+	// will never be included in the synchronisation process
+	"files_to_ignore": [
+		"*.DS_Store"
+	],
+
+	// Directories to ignore when syncing your data
+	"dirs_to_ignore": [
+		"Package Control.cache"
 	]
 }
