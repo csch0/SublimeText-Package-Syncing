@@ -82,7 +82,11 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 
 			if os.path.isdir(path):
 				if os.listdir(path):
-					override = sublime.ok_cancel_dialog("The selected folder is not empty, would you like to continue and override your local settings?", "Continue")
+					if sublime.ok_cancel_dialog("The selected folder is not empty, would you like to continue and override your local settings?", "Continue"):
+						override = True
+					else:
+						self.window.show_input_panel("Sync Folder", path, on_done, None, None)
+						return
 				else:
 					override = False
 
@@ -96,6 +100,7 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 				sublime.error_message("Invalid Path %s" % path)
 
 		self.window.show_input_panel("Sync Folder", sync_folder, on_done, None, None)
+
 
 def plugin_loaded():
 	sync_pull()
