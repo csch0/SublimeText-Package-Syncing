@@ -15,7 +15,8 @@ class PkgSyncListnerCommand(sublime_plugin.EventListener):
 		sublime.set_timeout(lambda: sync_pull(), 500)
 
 	def on_activated(self, view):
-		sublime.set_timeout(lambda: sync_pull(), 250)
+		if view.file_name():
+			sublime.set_timeout(lambda: sync_pull(), 250)
 
 	def on_post_save(self, view):
 		sublime.set_timeout(lambda: sync_push(), 500)
