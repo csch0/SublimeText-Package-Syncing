@@ -45,9 +45,9 @@ In order to use get the benefit of automatic installation of packages across the
 
 ## Donating
 
-Support this project and [others by chris][gittip] via [gittip][] or [paypal][].
+Support this project via [gittip][] or [paypal][].
 
-[![Support via Gittip](https://rawgithub.com/chris---/Donation-Badges/master/gittip.jpeg)][gittip][![Support via PayPal](https://rawgithub.com/chris---/Donation-Badges/master/paypal.jpeg)][paypal]
+[![Support via Gittip](https://rawgithub.com/chris---/Donation-Badges/master/gittip.jpeg)][gittip] [![Support via PayPal](https://rawgithub.com/chris---/Donation-Badges/master/paypal.jpeg)][paypal]
 
 [gittip]: https://www.gittip.com/Chris---
 [paypal]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZWZCJPFSZNXEW
