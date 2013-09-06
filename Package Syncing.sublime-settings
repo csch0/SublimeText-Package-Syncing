@@ -13,11 +13,16 @@
 	// Files to ignore when syncing your data, Package Syncing.sublime-settings
 	// will never be included in the synchronisation process
 	"files_to_ignore": [
-		"*.DS_Store"
+		"*.DS_Store",
+		"Package Control.last-run",
+		"Package Control.ca-list",
+		"Package Control.ca-bundle",
+		"Package Control.system-ca-bundle"
 	],
 
 	// Directories to ignore when syncing your data
 	"dirs_to_ignore": [
-		"Package Control.cache"
+		"Package Control.cache",
+		"Package Control.ca-cert"
 	]
 }
