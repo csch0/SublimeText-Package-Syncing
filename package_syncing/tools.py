@@ -10,8 +10,11 @@ try:
 except ValueError:
 	from st2 import *
 
-global PACKAGE_SYNC_LASTRUN
-PACKAGE_SYNC_LASTRUN = time.time()
+global PACKAGE_SYNC_LAST_PULL
+global PACKAGE_SYNC_LAST_PUSH
+
+PACKAGE_SYNC_LAST_PULL = time.time()
+PACKAGE_SYNC_LAST_PUSH = time.time()
 
 def find_files(path):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
@@ -42,14 +45,14 @@ def find_files(path):
 	return resources
 
 
-def sync_push():
+def sync_push(check_last_run = True):
 
-	global PACKAGE_SYNC_LASTRUN
+	global PACKAGE_SYNC_LAST_PUSH
 
-	if time.time() - PACKAGE_SYNC_LASTRUN < 12:
+	if check_last_run and time.time() - PACKAGE_SYNC_LAST_PUSH < 12:
 		return
 
-	PACKAGE_SYNC_LASTRUN = time.time()
+	PACKAGE_SYNC_LAST_PUSH = time.time()
 
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
@@ -79,7 +82,15 @@ def sync_push():
 			logger.info("%s <-> %s",  value["version"], remote_data[key]["version"] if key in remote_data else "None")
 
 
-def sync_pull(override = False):
+def sync_pull(check_last_run = True, override = False):
+
+	global PACKAGE_SYNC_LAST_PULL
+
+	if check_last_run and time.time() - PACKAGE_SYNC_LAST_PULL < 12:
+		return
+
+	PACKAGE_SYNC_LAST_PULL = time.time()
+
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
 	remote_dir = s.get("sync_folder")

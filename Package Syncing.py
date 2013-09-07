@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 
-import os.path, logging
+import fnmatch, os.path, logging
 logging.basicConfig(level = logging.INFO, format="[%(asctime)s - %(levelname)s - %(name)s] %(message)s")
 
 try:
@@ -12,14 +12,30 @@ except ValueError:
 class PkgSyncListnerCommand(sublime_plugin.EventListener):
 
 	def on_load(self, view):
-		sublime.set_timeout(view.window().run_command("pkg_sync_pull"), 500)
+		# Need check if file included
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		files_to_include = s.get("files_to_include", [])
+		files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings"]
+
+		include_matches = [fnmatch.fnmatch(view.file_name(), p) for p in files_to_include]
+		ignore_matches = [fnmatch.fnmatch(view.file_name(), p) for p in files_to_ignore]
+		if any(include_matches) and not any(ignore_matches):
+			sublime.set_timeout(view.window().run_command("pkg_sync_pull", {"check_last_run": False}), 500)
 
 	def on_activated(self, view):
 		if view.file_name():			
 			sublime.set_timeout(view.window().run_command("pkg_sync_pull"), 250)
 
 	def on_post_save(self, view):
-		sublime.set_timeout(view.window().run_command("pkg_sync_push"), 500)
+		# Need check if file included
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		files_to_include = s.get("files_to_include", [])
+		files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings"]
+
+		include_matches = [fnmatch.fnmatch(view.file_name(), p) for p in files_to_include]
+		ignore_matches = [fnmatch.fnmatch(view.file_name(), p) for p in files_to_ignore]
+		if any(include_matches) and not any(ignore_matches):
+			sublime.set_timeout(view.window().run_command("pkg_sync_push", {"check_last_run": False}), 500)
 
 
 class PkgSyncEnableCommand(sublime_plugin.WindowCommand):
@@ -52,8 +68,8 @@ class PkgSyncPullCommand(sublime_plugin.WindowCommand):
 		s = sublime.load_settings("Package Syncing.sublime-settings")
 		return s.get("sync", False) and s.get("sync_folder") != None
 
-	def run(self):
-		sync_pull()
+	def run(self, check_last_run = True):
+		sync_pull(check_last_run)
 
 
 class PkgSyncPushCommand(sublime_plugin.WindowCommand):
@@ -62,8 +78,8 @@ class PkgSyncPushCommand(sublime_plugin.WindowCommand):
 		s = sublime.load_settings("Package Syncing.sublime-settings")
 		return s.get("sync", False) and s.get("sync_folder") != None
 
-	def run(self):
-		sync_push()
+	def run(self, check_last_run = True):
+		sync_push(check_last_run)
 
 
 class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
