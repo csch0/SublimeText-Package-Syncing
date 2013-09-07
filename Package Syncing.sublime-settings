@@ -1,6 +1,6 @@
 {
 	// General sync settings like the location
-	"sync": true,
+	"sync": false,
 	"sync_folder": "",
 
 	// Files to include, as long they do not match a pattern in files_to_ignore

@@ -12,14 +12,14 @@ except ValueError:
 class PkgSyncListnerCommand(sublime_plugin.EventListener):
 
 	def on_load(self, view):
-		sublime.set_timeout(lambda: sync_pull(), 500)
+		sublime.set_timeout(view.window().run_command("pkg_sync_pull"), 500)
 
 	def on_activated(self, view):
-		if view.file_name():
-			sublime.set_timeout(lambda: sync_pull(), 250)
+		if view.file_name():			
+			sublime.set_timeout(view.window().run_command("pkg_sync_pull"), 250)
 
 	def on_post_save(self, view):
-		sublime.set_timeout(lambda: sync_push(), 500)
+		sublime.set_timeout(view.window().run_command("pkg_sync_push"), 500)
 
 
 class PkgSyncEnableCommand(sublime_plugin.WindowCommand):
@@ -50,7 +50,7 @@ class PkgSyncPullCommand(sublime_plugin.WindowCommand):
 
 	def is_enabled(self):
 		s = sublime.load_settings("Package Syncing.sublime-settings")
-		return s.get("sync", False)
+		return s.get("sync", False) and s.get("sync_folder") != None
 
 	def run(self):
 		sync_pull()
@@ -60,7 +60,7 @@ class PkgSyncPushCommand(sublime_plugin.WindowCommand):
 
 	def is_enabled(self):
 		s = sublime.load_settings("Package Syncing.sublime-settings")
-		return s.get("sync", False)
+		return s.get("sync", False) and s.get("sync_folder") != None
 
 	def run(self):
 		sync_push()

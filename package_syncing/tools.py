@@ -1,6 +1,7 @@
 import sublime, sublime_plugin
 
-import fnmatch, logging, os, shutil
+import fnmatch, logging, os, shutil, time
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -8,6 +9,9 @@ try:
 	from .st2 import *
 except ValueError:
 	from st2 import *
+
+global PACKAGE_SYNC_LASTRUN
+PACKAGE_SYNC_LASTRUN = time.time()
 
 def find_files(path):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
@@ -30,7 +34,7 @@ def find_files(path):
 
 			include_matches = [fnmatch.fnmatch(rel_path, p) for p in files_to_include]
 			ignore_matches = [fnmatch.fnmatch(rel_path, p) for p in files_to_ignore]
-			if any(ignore_matches) and not any(include_matches):
+			if any(ignore_matches) or not any(include_matches):
 				continue
 
 			resources[rel_path] = {"version": os.path.getmtime(full_path), "path": full_path, "dir": os.path.dirname(rel_path)}
@@ -39,6 +43,14 @@ def find_files(path):
 
 
 def sync_push():
+
+	global PACKAGE_SYNC_LASTRUN
+
+	if time.time() - PACKAGE_SYNC_LASTRUN < 12:
+		return
+
+	PACKAGE_SYNC_LASTRUN = time.time()
+
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
 	remote_dir = s.get("sync_folder")
