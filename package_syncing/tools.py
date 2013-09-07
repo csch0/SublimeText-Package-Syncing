@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 
-import fnmatch, logging, os, shutil, time
+import fnmatch, logging, os, shutil, threading
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -10,11 +10,11 @@ try:
 except ValueError:
 	from st2 import *
 
-global PACKAGE_SYNC_LAST_PULL
-global PACKAGE_SYNC_LAST_PUSH
+global PKG_SYNC_PULL_TIMER
+global PKG_SYNC_PUSH_TIMER
 
-PACKAGE_SYNC_LAST_PULL = time.time()
-PACKAGE_SYNC_LAST_PUSH = time.time()
+PKG_SYNC_PULL_TIMER = None
+PKG_SYNC_PUSH_TIMER = None
 
 def find_files(path):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
@@ -47,80 +47,85 @@ def find_files(path):
 
 def sync_push(check_last_run = True):
 
-	global PACKAGE_SYNC_LAST_PUSH
+	def push():
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		local_dir = os.path.join(sublime.packages_path(), "User")
+		remote_dir = s.get("sync_folder")
 
-	if check_last_run and time.time() - PACKAGE_SYNC_LAST_PUSH < 12:
-		return
+		if not s.get("sync"):
+			return
 
-	PACKAGE_SYNC_LAST_PUSH = time.time()
+		if not os.path.isdir(remote_dir):
+			sublime.status_message("Invalid Sync Folder \"%s\"" % remote_dir)
+			return
 
-	s = sublime.load_settings("Package Syncing.sublime-settings")
-	local_dir = os.path.join(sublime.packages_path(), "User")
-	remote_dir = s.get("sync_folder")
+		local_data = find_files(local_dir)
+		remote_data = find_files(remote_dir)
 
-	if not s.get("sync"):
-		return
+		logger.debug("%s", local_data)
+		logger.debug("%s", remote_data)
 
-	if not os.path.isdir(remote_dir):
-		sublime.status_message("Invalid Sync Folder \"%s\"" % remote_dir)
-		return
+		for key, value in local_data.items():
+			if key not in remote_data or int(value["version"]) > int(remote_data[key]["version"]):
+				target_dir = os.path.join(remote_dir, value["dir"])
+				if not os.path.isdir(target_dir):
+					os.mkdir(target_dir)
+				shutil.copy2(value["path"], target_dir)
+				# Debug
+				logger.info("%s --> %s",  key, target_dir)
+				logger.info("%s <-> %s",  value["version"], remote_data[key]["version"] if key in remote_data else "None")
 
-	local_data = find_files(local_dir)
-	remote_data = find_files(remote_dir)
-
-	logger.debug("%s", local_data)
-	logger.debug("%s", remote_data)
-
-	for key, value in local_data.items():
-		if key not in remote_data or int(value["version"]) > int(remote_data[key]["version"]):
-			target_dir = os.path.join(remote_dir, value["dir"])
-			if not os.path.isdir(target_dir):
-				os.mkdir(target_dir)
-			shutil.copy2(value["path"], target_dir)
-			# Debug
-			logger.info("%s --> %s",  key, target_dir)
-			logger.info("%s <-> %s",  value["version"], remote_data[key]["version"] if key in remote_data else "None")
-
+	global PKG_SYNC_PUSH_TIMER
+	
+	if check_last_run:
+		if not PKG_SYNC_PUSH_TIMER or not PKG_SYNC_PUSH_TIMER.is_alive():
+			PKG_SYNC_PUSH_TIMER = threading.Timer(10, push)
+			PKG_SYNC_PUSH_TIMER.start()
+	else:
+		push()
 
 def sync_pull(check_last_run = True, override = False):
 
-	global PACKAGE_SYNC_LAST_PULL
+	def pull():
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		local_dir = os.path.join(sublime.packages_path(), "User")
+		remote_dir = s.get("sync_folder")
 
-	if check_last_run and time.time() - PACKAGE_SYNC_LAST_PULL < 12:
-		return
+		if not s.get("sync"):
+			return
 
-	PACKAGE_SYNC_LAST_PULL = time.time()
+		if not os.path.isdir(remote_dir):
+			sublime.status_message("Invalid Sync Folder \"%s\"" % remote_dir)
+			return
 
-	s = sublime.load_settings("Package Syncing.sublime-settings")
-	local_dir = os.path.join(sublime.packages_path(), "User")
-	remote_dir = s.get("sync_folder")
+		clear_on_change_listener()
 
-	if not s.get("sync"):
-		return
+		local_data = find_files(local_dir)
+		remote_data = find_files(remote_dir)
 
-	if not os.path.isdir(remote_dir):
-		sublime.status_message("Invalid Sync Folder \"%s\"" % remote_dir)
-		return
+		logger.debug("%s", local_data)
+		logger.debug("%s", remote_data)
 
-	clear_on_change_listener()
+		for key, value in remote_data.items():
+			if key not in local_data or int(value["version"]) > int(local_data[key]["version"]) or override:
+				target_dir = os.path.join(local_dir, value["dir"])
+				if not os.path.isdir(target_dir):
+					os.mkdir(target_dir)
+				shutil.copy2(value["path"], target_dir)
+				# Debug
+				logger.info("%s --> %s",  key, target_dir)
+				logger.info("%s <-> %s",  value["version"], local_data[key]["version"] if key in local_data else "None")
 
-	local_data = find_files(local_dir)
-	remote_data = find_files(remote_dir)
+		add_on_change_listener()
 
-	logger.debug("%s", local_data)
-	logger.debug("%s", remote_data)
-
-	for key, value in remote_data.items():
-		if key not in local_data or int(value["version"]) > int(local_data[key]["version"]) or override:
-			target_dir = os.path.join(local_dir, value["dir"])
-			if not os.path.isdir(target_dir):
-				os.mkdir(target_dir)
-			shutil.copy2(value["path"], target_dir)
-			# Debug
-			logger.info("%s --> %s",  key, target_dir)
-			logger.info("%s <-> %s",  value["version"], local_data[key]["version"] if key in local_data else "None")
-
-	add_on_change_listener()
+	global PKG_SYNC_PULL_TIMER
+	
+	if check_last_run:
+		if not PKG_SYNC_PULL_TIMER or not PKG_SYNC_PULL_TIMER.is_alive():
+			PKG_SYNC_PULL_TIMER = threading.Timer(10, pull)
+			PKG_SYNC_PULL_TIMER.start()
+	else:
+		pull()
 
 def find_settings(user = False):
 	settings = []
