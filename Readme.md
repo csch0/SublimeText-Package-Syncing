@@ -34,7 +34,7 @@ Package Syncing will keep your settings up to date across different machines by 
 - Automatically pull/push in case Sublime Text gains focus (maximal every 10 seconds by default)
 - Automatically push if a *sublime-settings file was changes in the background (maximal every 10 seconds by default)
 
-The word push and pull are just named after the git commands, git is **not* required to use Package Syncing.
+The words push and pull are just named after the git commands, git is **not* required to use Package Syncing.
 
 ## Demo
 

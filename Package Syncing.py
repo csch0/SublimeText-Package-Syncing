@@ -12,7 +12,6 @@ except ValueError:
 class PkgSyncListnerCommand(sublime_plugin.EventListener):
 
 	def is_enabled(self, view, on_save = False):
-		# Need check if file included
 		s = sublime.load_settings("Package Syncing.sublime-settings")
 		files_to_include = s.get("files_to_include", [])
 		files_to_ignore = s.get("files_to_ignore", []) + ["*.sublime-settings"] if on_save else ["Package Syncing.sublime-settings"]

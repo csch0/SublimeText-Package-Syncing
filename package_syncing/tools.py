@@ -85,15 +85,26 @@ def push_settings():
 	# Apply diff for push
 	for item in diff:
 		logger.debug("%s", item)
+		
+		# Perform delete item
 		if item["type"] == "d":
 			if os.path.isfile(item["target"]):
 				os.remove(item["target"])
 				logger.info("Deleted %s",  item["target"])
+			
+			# Check if dir is empty and remove it if
+			dir_name = os.path.dirname(item["target"])
+			if os.path.isdir(dir_name) and not os.listdir(dir_name):
+				os.rmdir(dir_name)
+		
+		# Perform new item
 		elif item["type"] == "n":
 			if not os.path.isdir(os.path.dirname(item["target"])):
 				os.mkdir(os.path.dirname(item["target"]))
 			shutil.copy2(item["source"], item["target"])
 			logger.info("Created %s", item["target"])
+		
+		# Perform updated item
 		elif item["type"] == "u":
 			if not os.path.isdir(os.path.dirname(item["target"])):
 				os.mkdir(os.path.dirname(item["target"]))
@@ -157,12 +168,21 @@ def pull_settings(override = False):
 			if os.path.isfile(item["target"]):
 				os.remove(item["target"])
 				logger.info("Deleted %s",  item["target"])
+			
+			# Check if dir is empty and remove it if
+			dir_name = os.path.dirname(item["target"])
+			if os.path.isdir(dir_name) and not os.listdir(dir_name):
+				os.rmdir(dir_name)
+
+		# Perform new item
 		elif item["type"] == "n":
 			if not os.path.isdir(os.path.dirname(item["target"])):
 				os.mkdir(os.path.dirname(item["target"]))
 			shutil.copy2(item["source"], item["target"])
 			logger.info("Created %s", item["target"])
-		elif item["type"] == "u":
+
+		# Perform updated item
+		elif item["type"] == "u" or item["type"] == "o":
 			if not os.path.isdir(os.path.dirname(item["target"])):
 				os.mkdir(os.path.dirname(item["target"]))
 			shutil.copy2(item["source"], item["target"])
