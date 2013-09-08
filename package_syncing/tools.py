@@ -201,7 +201,11 @@ def sync(check_last_run = True, mode = ["pull", "push"], override = False):
 
 	if check_last_run:
 		if not PKG_SYNC_TIMER or not PKG_SYNC_TIMER.is_alive():
-			PKG_SYNC_TIMER = threading.Timer(10, do_sync)
+			s = sublime.load_settings("Package Syncing.sublime-settings")
+			sync_interval = s.get("sync_interval", 10)
+
+			# Start the timer
+			PKG_SYNC_TIMER = threading.Timer(sync_interval, do_sync)
 			PKG_SYNC_TIMER.start()
 	else:
 		do_sync()

@@ -2,6 +2,7 @@
 	// General sync settings like the location
 	"sync": false,
 	"sync_folder": "",
+	"sync_interval": 10,
 
 	// Files to include, as long they do not match a pattern in files_to_ignore
 	"files_to_include": [
