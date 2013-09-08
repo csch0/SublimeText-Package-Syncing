@@ -98,7 +98,7 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 				sublime.save_settings("Package Syncing.sublime-settings")
 				sublime.status_message("sync_folder successfully set to \"%s\"" % path)
 				# 
-				sublime.run_command("pkg_sync", {"check_last_run:": "false", mode": ["pull", "push"], "override": override})
+				sublime.run_command("pkg_sync", {"check_last_run": False, "mode": ["pull", "push"], "override": override})
 			else:
 				sublime.error_message("Invalid Path %s" % path)
 
