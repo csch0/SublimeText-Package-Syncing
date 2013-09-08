@@ -3,7 +3,7 @@ import sublime, sublime_plugin
 import fnmatch, logging, os, shutil, threading
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 try:
 	from .st2 import *
@@ -19,7 +19,7 @@ PKG_SYNC_PUSH_TIMER = None
 def find_files(path):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	files_to_include = s.get("files_to_include", [])
-	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings"]
+	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
 	dirs_to_ignore = s.get("dirs_to_ignore", [])
 
 	logger.debug("path %s", path)
@@ -62,18 +62,43 @@ def sync_push(check_last_run = True):
 		local_data = find_files(local_dir)
 		remote_data = find_files(remote_dir)
 
-		logger.debug("%s", local_data)
-		logger.debug("%s", remote_data)
+		# Get data of last sync
+		last_data = sublime.load_settings("Package Syncing.last-run")
+		last_local_data = last_data.get("local_data", {})
+		last_remote_data = last_data.get("remote_data", {})
 
+		# Set data for next last sync
+		last_data.set("local_data", local_data)
+		sublime.save_settings("Package Syncing.last-run")
+
+		deleted_local_data = [key for key in last_local_data if key not in local_data]
+		deleted_remote_data = [key for key in last_remote_data if key not in remote_data]
+
+		logger.debug("local_data: %s", local_data)
+		logger.debug("remote_data: %s", remote_data)
+		logger.debug("deleted_local_data: %s", deleted_local_data)
+		logger.debug("deleted_remote_data: %s", deleted_remote_data)
+
+		diff = [{"type": "d", "target": os.path.join(remote_dir, last_local_data[key]["dir"], key)} for key in last_local_data if key not in local_data]
 		for key, value in local_data.items():
-			if key not in remote_data or int(value["version"]) > int(remote_data[key]["version"]):
-				target_dir = os.path.join(remote_dir, value["dir"])
-				if not os.path.isdir(target_dir):
-					os.mkdir(target_dir)
-				shutil.copy2(value["path"], target_dir)
-				# Debug
-				logger.info("%s --> %s",  key, target_dir)
-				logger.info("%s <-> %s",  value["version"], remote_data[key]["version"] if key in remote_data else "None")
+			if key in deleted_remote_data:
+				pass
+			elif key not in remote_data:
+				diff += [{"type": "n", "target": os.path.join(remote_dir, value["dir"], key), "source": value["path"]}]
+			elif int(value["version"]) > int(remote_data[key]["version"]):
+				diff += [{"type": "u", "target": os.path.join(remote_dir, value["dir"], key), "source": value["path"]}]
+
+		# Apply diff for push
+		for item in diff:
+			if item["type"] == "d":
+				if os.path.isfile(item["target"]):
+					os.remove(item["target"])
+					logger.info("Deleted %s",  item["target"])
+			elif item["type"] == "u" or item["type"] == "n":
+				if not os.path.isdir(os.path.dirname(item["target"])):
+					os.mkdir(os.path.dirname(item["target"]))
+				shutil.copy2(item["source"], item["target"])
+				logger.info("%s --> %s",  item["source"], item["target"])
 
 	global PKG_SYNC_PUSH_TIMER
 	

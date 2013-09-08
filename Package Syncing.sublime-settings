@@ -7,7 +7,8 @@
 	"files_to_include": [
 		"*.sublime-build",
 		"*.sublime-keymap",
-		"*.sublime-settings"
+		"*.sublime-settings",
+		"*.sublime-snippet"
 	],
 
 	// Files to ignore when syncing your data, Package Syncing.sublime-settings
