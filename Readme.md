@@ -1,12 +1,8 @@
 # Package Syncing
 
-Keep your different Sublime Test installations synchronised across different machines. This idea of the package came by reading the article on [sublime.wbond.net](https://sublime.wbond.net/docs/syncing), so you could use the manual way or simple using this package.
+Keep your different Sublime Test installations synchronised across different machines. This idea of the package came by reading the article on [sublime.wbond.net](https://sublime.wbond.net/docs/syncing), so you could use the manual way or simple using this package. 
 
-## Demo
-
-An example sync between two machines; on the top Sublime Text 3 on OSX and on the bottom on Windows.
-
-![SyncFolder](https://raw.github.com/wiki/Chris---/SublimeText-Package-Syncing/example.gif)
+The package is using a different attempt rather than just build a link. It is basically syncing your user folder and you can define which files you would like to include in the sync. On the other hand you can also exclude files from the sync for example for platform depending settings or packages.
 
 ## Usage
 
@@ -18,15 +14,33 @@ On your first machine you just have to set a proper sync folder and Package Sync
 
 ### Second Machine (or after a fresh installation)
 
-On your second machine you simple have to set the sync folder and Package Syncing will automatically pull all available files from that folder. This following message dialog should appear which you just have to confirm.
+On your second machine please wait until all files are available and then you simple have to set the sync folder and Package Syncing will automatically pull all available files from that folder. This following message dialog should appear which you just have to confirm.
 
 ![SyncFolder](https://raw.github.com/wiki/Chris---/SublimeText-Package-Syncing/sync_folder.jpg)
 
-After a **restart** Package Control will check for missing packages and install them automatically.
+After a **restart** of Sublime Text Package Control will check for missing packages and install them automatically. From now on everything should work very smoothly.
 
 ### Requirements
 
-In order to use get the benefit of automatic installation of packages across the different machines [Package Control](https://sublime.wbond.net) is required.
+In order to use get the benefit of automatic installation of packages across the different machines [Package Control](https://sublime.wbond.net) is basically required.
+
+## Under the Hood
+
+Package Syncing will keep your settings up to date across different machines by executing the following events:
+
+- Manual push and pull your settings to/from your sync folder by hand 
+- Automatically pull if you open a file (which is included in the sync) in Sublime Text
+- Automatically push if you save a file (which is included in the sync) in Sublime Text
+- Automatically pull/push in case Sublime Text gains focus (maximal every 10 seconds by default)
+- Automatically push if a *sublime-settings file was changes in the background (maximal every 10 seconds by default)
+
+The word push and pull are just named after the git commands, git is **not* required to use Package Syncing.
+
+## Demo
+
+An example sync between two machines; on the top Sublime Text 3 on OSX and on the bottom on Windows.
+
+![SyncFolder](https://raw.github.com/wiki/Chris---/SublimeText-Package-Syncing/example.gif)
 
 ## Installation
 
