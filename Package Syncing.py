@@ -105,9 +105,7 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 
 
 def plugin_loaded():
-	tools.pull_all()
-	tools.push_all()
-	tools.start_watcher()
+	sublime.set_timeout(lambda: sublime.run_command("pkg_sync", {"mode": ["pull", "push"]}), 2000)	
 
 def plugin_unloaded():
 	tools.stop_watcher()

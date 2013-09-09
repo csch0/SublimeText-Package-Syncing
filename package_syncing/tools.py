@@ -10,8 +10,6 @@ try:
 except ValueError:
 	from tools import watcher
 
-PKG_SYNC_TIMER = None
-PKG_SYNC_QUEUE = []
 
 def find_files(path):
 	s = sublime.load_settings("Package Syncing.sublime-settings")
@@ -19,10 +17,10 @@ def find_files(path):
 	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
 	dirs_to_ignore = s.get("dirs_to_ignore", [])
 
-	# logger.debug("path %s", path)
-	# logger.debug("files_to_include %s", files_to_include)
-	# logger.debug("files_to_ignore %s", files_to_ignore)
-	# logger.debug("dirs_to_ignore %s", dirs_to_ignore)
+	logger.debug("path %s", path)
+	logger.debug("files_to_include %s", files_to_include)
+	logger.debug("files_to_ignore %s", files_to_ignore)
+	logger.debug("dirs_to_ignore %s", dirs_to_ignore)
 
 	resources = {}
 	for root, dir_names, file_names in os.walk(path):
@@ -287,19 +285,8 @@ def pull(item):
 	# Set data for next last sync
 	save_last_data(last_local_data, last_remote_data)
 
-
 watcher_local = None
 watcher_remote = None
-
-def stop_watcher():
-	global watcher_local
-	global watcher_remote
-
-	try:
-		watcher_local.stop = True
-		watcher_remote.stop = True
-	except:
-		pass
 
 def start_watcher():
 	s = sublime.load_settings("Package Syncing.sublime-settings")
@@ -318,3 +305,14 @@ def start_watcher():
 	#
 	watcher_local = watcher.WatcherThread(local_dir, push, files_to_include, files_to_ignore, dirs_to_ignore)
 	watcher_local.start()
+
+def stop_watcher():
+	
+	global watcher_local
+	global watcher_remote
+
+	try:
+		watcher_local.stop = True
+		watcher_remote.stop = True
+	except:
+		pass
