@@ -9,7 +9,8 @@
 		"*.sublime-build",
 		"*.sublime-keymap",
 		"*.sublime-settings",
-		"*.sublime-snippet"
+		"*.sublime-snippet",
+		"*.tmTheme"
 	],
 
 	// Files to ignore when syncing your data, Package Syncing.sublime-settings
