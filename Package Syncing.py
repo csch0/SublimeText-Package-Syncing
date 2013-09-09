@@ -91,9 +91,7 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 					override = False
 
 				s.set("sync_folder", path)
-
-				if sublime.ok_cancel_dialog("Enabled sync now?", "Enable"):
-					s.set("sync", True)
+				s.set("sync", True)
 
 				sublime.save_settings("Package Syncing.sublime-settings")
 				sublime.status_message("sync_folder successfully set to \"%s\"" % path)
