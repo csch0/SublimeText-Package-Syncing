@@ -22,9 +22,12 @@ class Sync(threading.Thread):
 	def run(self):
 		logger.info("Package Syncing - Start Complete Sync")
 
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		sync_interval = s.get("sync_interval", 1)
+
 		# Stop watcher and wait for the poll
 		stop_watcher()
-		time.sleep(2)
+		time.sleep(sync_interval + 0.5)
 		
 		if "pull" in self.mode:
 			pull_all(self.override)
@@ -319,6 +322,8 @@ def start_watcher():
 	local_dir = os.path.join(sublime.packages_path(), "User")
 	remote_dir = s.get("sync_folder")
 	# 
+	sync_interval = s.get("sync_interval")
+	# 
 	files_to_include = s.get("files_to_include", [])
 	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
 	dirs_to_ignore = s.get("dirs_to_ignore", [])
@@ -326,10 +331,10 @@ def start_watcher():
 	global watcher_local
 	global watcher_remote
 	# 
-	watcher_remote = watcher.WatcherThread(remote_dir, pull, files_to_include, files_to_ignore, dirs_to_ignore)
+	watcher_remote = watcher.WatcherThread(remote_dir, pull, sync_interval, files_to_include, files_to_ignore, dirs_to_ignore)
 	watcher_remote.start()
 	#
-	watcher_local = watcher.WatcherThread(local_dir, push, files_to_include, files_to_ignore, dirs_to_ignore)
+	watcher_local = watcher.WatcherThread(local_dir, push, sync_interval, files_to_include, files_to_ignore, dirs_to_ignore)
 	watcher_local.start()
 
 def stop_watcher():

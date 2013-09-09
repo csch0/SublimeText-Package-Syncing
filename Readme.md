@@ -26,15 +26,7 @@ In order to use get the benefit of automatic installation of packages across the
 
 ## Under the Hood
 
-Package Syncing will keep your settings up to date across different machines by executing the following events:
-
-- Manual push and pull your settings to/from your sync folder by hand 
-- Automatically pull if you open a file (which is included in the sync) in Sublime Text
-- Automatically push if you save a file (which is included in the sync) in Sublime Text
-- Automatically pull/push in case Sublime Text gains focus (maximal every 10 seconds by default)
-- Automatically push if a *sublime-settings file was changes in the background (maximal every 10 seconds by default)
-
-The words push and pull are just named after the git commands, git is **not* required to use Package Syncing.
+Package Syncing will keep your settings up to date across different machines by checking regular your user and remote directory for updates. The defaults interval is 1 second, if you should have any performance issues you can increase this time via the settings and a restart of Sublime Text.
 
 ## Demo
 

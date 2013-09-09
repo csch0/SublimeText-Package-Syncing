@@ -7,10 +7,12 @@ class WatcherThread(threading.Thread):
 
 	stop = False
 
-	def __init__(self, folder, callback, files_to_include = [], files_to_ignore = [], dirs_to_ignore = []):
+	def __init__(self, folder, callback, sync_interval, files_to_include = [], files_to_ignore = [], dirs_to_ignore = []):
 		self.folder = folder;
 		self.callback = callback
 
+		self.sync_interval = sync_interval
+		
 		self.files_to_include = files_to_include
 		self.files_to_ignore = files_to_ignore
 		self.dirs_to_ignore = dirs_to_ignore
@@ -20,7 +22,7 @@ class WatcherThread(threading.Thread):
 	def run(self):
 		w = Watcher(self.folder, self.callback, self.files_to_include, self.files_to_ignore, self.dirs_to_ignore)
 		while not self.stop:
-			w.loop()
+			w.loop(self.sync_interval)
 
 class Watcher(object):
 
@@ -30,7 +32,7 @@ class Watcher(object):
 
 		self.folder = folder;
 		self.callback = callback
-
+		
 		self.files_to_include = files_to_include
 		self.files_to_ignore = files_to_ignore
 		self.dirs_to_ignore = dirs_to_ignore
