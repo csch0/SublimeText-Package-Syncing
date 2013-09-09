@@ -20,9 +20,11 @@ class Sync(threading.Thread):
 		threading.Thread.__init__(self)
 
 	def run(self):
+		logger.info("Package Syncing - Start Complete Sync")
+
 		# Stop watcher and wait for the poll
 		stop_watcher()
-		time.sleep(1.5)
+		time.sleep(2)
 		
 		if "pull" in self.mode:
 			pull_all(self.override)
@@ -31,6 +33,8 @@ class Sync(threading.Thread):
 		
 		# Restart watcher again
 		start_watcher()
+
+		logger.info("Package Syncing - End Complete Sync")
 
 
 def find_files(path):

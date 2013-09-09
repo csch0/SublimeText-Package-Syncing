@@ -8,6 +8,7 @@ try:
 except ValueError:
 	from package_syncing import tools
 
+sync = None
 
 class PkgSyncEnableCommand(sublime_plugin.WindowCommand):
 
@@ -20,8 +21,7 @@ class PkgSyncEnableCommand(sublime_plugin.WindowCommand):
 		s.set("sync", True)
 		sublime.save_settings("Package Syncing.sublime-settings")
 		
-		# Start watcher
-		tools.start_watcher()
+		sublime.run_command("pkg_sync", {"mode": ["pull", "push"]})
 
 
 class PkgSyncDisableCommand(sublime_plugin.WindowCommand):
@@ -46,7 +46,12 @@ class PkgSyncCommand(sublime_plugin.ApplicationCommand):
 		return s.get("sync", False) and s.get("sync_folder") != None
 
 	def run(self, mode = ["pull", "push"], override = False):
-		tools.Sync(mode, override).start()
+		global sync
+		if not sync or not sync.is_alive():
+			sync = tools.Sync(mode, override)
+			sync.start()
+		else:
+			print("Skip sync, already running")
 
 class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 
@@ -85,7 +90,7 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 				sublime.save_settings("Package Syncing.sublime-settings")
 				sublime.status_message("sync_folder successfully set to \"%s\"" % path)
 				#
-				sublime.run_command("pkg_sync", {"mode": ["pull", "push"], "override": True})
+				sublime.run_command("pkg_sync", {"mode": ["pull", "push"], "override": override})
 			else:
 				sublime.error_message("Invalid Path %s" % path)
 
