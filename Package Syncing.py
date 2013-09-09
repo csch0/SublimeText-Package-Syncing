@@ -83,6 +83,11 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 				s.set("sync_folder", path)
 
 				# Reset last-run file
+				file_path = os.path.join(sublime.packages_path(), "User", "Package Control.last-run")
+				if os.path.isfile(file_path):
+					os.remove(file_path)
+
+				# Reset last-run file
 				file_path = os.path.join(sublime.packages_path(), "User", "Package Syncing.last-run")
 				if os.path.isfile(file_path):
 					os.remove(file_path)
