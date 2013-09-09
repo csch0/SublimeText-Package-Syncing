@@ -164,7 +164,7 @@ def push(item):
 
 	elif item["type"] == "m":
 		if not os.path.isdir(target_dir):
-			os.mkdir(os.path.dirname(target_dir))
+			os.mkdir(target_dir)
 		shutil.copy2(item["path"], target)
 		logger.info("Updated %s", target)
 		# 
@@ -253,7 +253,7 @@ def pull(item):
 
 	if item["type"] == "c":
 		if not os.path.isdir(target_dir):
-			os.mkdir(os.path.dirname(target_dir))
+			os.mkdir(target_dir)
 		shutil.copy2(item["path"], target)
 		logger.info("Created %s", target)
 		# 
