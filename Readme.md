@@ -30,7 +30,7 @@ Package Syncing will keep your settings up to date across different machines by 
 
 ## Demo
 
-An example sync between two machines; on the top Sublime Text 3 on OSX and on the bottom on Windows.
+An example sync between two machines; on the top Sublime Text 3 on Windows (as virtual machine) and on the bottom on OS X.
 
 ![SyncFolder](https://raw.github.com/wiki/Chris---/SublimeText-Package-Syncing/example.gif)
 
