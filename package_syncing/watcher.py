@@ -1,4 +1,7 @@
-import errno, fnmatch, os, stat, threading, time
+import errno, fnmatch, logging, os, stat, threading, time
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 class WatcherThread(threading.Thread):
 
@@ -17,7 +20,7 @@ class WatcherThread(threading.Thread):
 	def run(self):
 		w = Watcher(self.folder, self.callback, self.files_to_include, self.files_to_ignore, self.dirs_to_ignore)
 		while not self.stop:
-			w.loop()		
+			w.loop()
 
 class Watcher(object):
 
@@ -36,7 +39,11 @@ class Watcher(object):
 		
 		self.update_files()
 		self.init_done = True
-	
+
+	def __del__(self):		
+		for key, value in self.files_map.items():
+			logger.debug("unwatching %s" % value["path"])
+
 	def listdir(self, walk = False):
 		items = []
 		for root, dir_names, file_names in os.walk(self.folder):
@@ -87,7 +94,7 @@ class Watcher(object):
 				self.watch(item)
 
 	def watch(self, item):
-		print("watching %s" % item["path"])
+		logger.debug("watching %s" % item["path"])
 		self.files_map[item["key"]] = item
 
 		# Run callback if file name changes
@@ -95,7 +102,7 @@ class Watcher(object):
 			self.callback(dict({"type": "c"}, **item))
 
 	def unwatch(self, item):
-		print("unwatching %s" % item["path"])
+		logger.debug("unwatching %s" % item["path"])
 		del self.files_map[item["key"]]
 		
 		# Run callback if file name changes

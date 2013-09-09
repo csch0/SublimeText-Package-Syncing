@@ -3,7 +3,7 @@ import sublime, sublime_plugin
 import fnmatch, json, logging, os, shutil, threading
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 try:
 	from . import watcher
@@ -91,7 +91,7 @@ def push_all(override = False):
 	logger.debug("deleted_local_data: %s", deleted_local_data)
 	logger.debug("deleted_remote_data: %s", deleted_remote_data)
 
-	diff = [{"type": "d", "target": os.path.join(remote_dir, key)} for key in last_local_data if key not in local_data]
+	diff = [{"type": "d", "key": key} for key in last_local_data if key not in local_data]
 	for key, value in local_data.items():
 		if key in deleted_remote_data:
 			pass
@@ -140,7 +140,7 @@ def push(item):
 
 	if item["type"] == "c":
 		if not os.path.isdir(target_dir):
-			os.mkdir(os.path.dirname(target_dir))
+			os.mkdir(target_dir)
 		shutil.copy2(item["path"], target)
 		logger.info("Created %s", target)
 		# 
@@ -204,7 +204,7 @@ def pull_all(override = False):
 	logger.debug("deleted_local_data: %s", deleted_local_data)
 	logger.debug("deleted_remote_data: %s", deleted_remote_data)
 
-	diff = [{"type": "d", "target": os.path.join(local_dir, key)} for key in last_remote_data if key not in remote_data]
+	diff = [{"type": "d", "key": key} for key in last_remote_data if key not in remote_data]
 	for key, value in remote_data.items():
 		if key in deleted_local_data:
 			pass
@@ -277,7 +277,7 @@ def pull(item):
 
 	elif item["type"] == "m":
 		if not os.path.isdir(target_dir):
-			os.mkdir(os.path.dirname(target_dir))
+			os.mkdir(target_dir)
 		shutil.copy2(item["path"], target)
 		logger.info("Updated %s", target)
 		# 
@@ -287,6 +287,20 @@ def pull(item):
 	# Set data for next last sync
 	save_last_data(last_local_data, last_remote_data)
 
+
+watcher_local = None
+watcher_remote = None
+
+def stop_watcher():
+	global watcher_local
+	global watcher_remote
+
+	try:
+		watcher_local.stop = True
+		watcher_remote.stop = True
+	except:
+		pass
+
 def start_watcher():
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
@@ -295,6 +309,9 @@ def start_watcher():
 	files_to_include = s.get("files_to_include", [])
 	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
 	dirs_to_ignore = s.get("dirs_to_ignore", [])
+	# 
+	global watcher_local
+	global watcher_remote
 	# 
 	watcher_remote = watcher.WatcherThread(remote_dir, pull, files_to_include, files_to_ignore, dirs_to_ignore)
 	watcher_remote.start()

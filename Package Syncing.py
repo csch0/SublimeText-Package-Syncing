@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 
-import fnmatch, os.path, logging
+import fnmatch, os.path, logging, time
 logging.basicConfig(level = logging.INFO, format="[%(asctime)s - %(levelname)s - %(name)s] %(message)s")
 
 try:
@@ -8,108 +8,109 @@ try:
 except ValueError:
 	from package_syncing import tools
 
-# class PkgSyncListnerCommand(sublime_plugin.EventListener):
 
-# 	def is_enabled(self, view, on_save = False):
-# 		s = sublime.load_settings("Package Syncing.sublime-settings")
-# 		files_to_include = s.get("files_to_include", [])
-# 		files_to_ignore = s.get("files_to_ignore", []) + ["*.sublime-settings"] if on_save else ["Package Syncing.sublime-settings"]
+class PkgSyncEnableCommand(sublime_plugin.WindowCommand):
 
-# 		include_matches = [fnmatch.fnmatch(view.file_name(), p) for p in files_to_include]
-# 		ignore_matches = [fnmatch.fnmatch(view.file_name(), p) for p in files_to_ignore]
-# 		return any(include_matches) and not any(ignore_matches)
+	def is_enabled(self):
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		return not s.get("sync", False)
 
-# 	def on_load(self, view):
-# 		if self.is_enabled(view):			
-# 			sublime.set_timeout(sublime.run_command("pkg_sync_pull", {"check_last_run": False}), 500)
-
-# 	def on_activated(self, view):
-# 		if view.file_name():			
-# 			sublime.set_timeout(sublime.run_command("pkg_sync", {"mode": ["pull", "push"]}), 250)
-
-# 	def on_post_save(self, view):
-# 		if self.is_enabled(view, True):			
-# 			sublime.set_timeout(sublime.run_command("pkg_sync_push", {"check_last_run": False}), 500)
-
-# class PkgSyncEnableCommand(sublime_plugin.WindowCommand):
-
-# # 	def is_enabled(self):
-# # 		s = sublime.load_settings("Package Syncing.sublime-settings")
-# # 		return not s.get("sync", False)
-
-# 	def run(self):
-# 		print(self)
-# 		global watcher
-# 		watcher.stop = True
-# # 		s = sublime.load_settings("Package Syncing.sublime-settings")
-# # 		s.set("sync", True)
-# # 		sublime.save_settings("Package Syncing.sublime-settings")
+	def run(self):
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		s.set("sync", True)
+		sublime.save_settings("Package Syncing.sublime-settings")
+		
+		# Start watcher
+		tools.start_watcher()
 
 
-# class PkgSyncDisableCommand(sublime_plugin.WindowCommand):
+class PkgSyncDisableCommand(sublime_plugin.WindowCommand):
 
-# # 	def is_enabled(self):
-# # 		s = sublime.load_settings("Package Syncing.sublime-settings")
-# # 		return s.get("sync", False)
+	def is_enabled(self):
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		return s.get("sync", False)
 
-# 	def run(self):
-# 		watcher.start()
-# # 		s = sublime.load_settings("Package Syncing.sublime-settings")
-# # 		s.set("sync", False)
-# # 		sublime.save_settings("Package Syncing.sublime-settings")
+	def run(self):
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		s.set("sync", False)
+		sublime.save_settings("Package Syncing.sublime-settings")
 
-
-# class PkgSyncCommand(sublime_plugin.ApplicationCommand):
-
-# 	def is_enabled(self):
-# 		s = sublime.load_settings("Package Syncing.sublime-settings")
-# 		return s.get("sync", False) and s.get("sync_folder") != None
-
-# 	def run(self, check_last_run = True, mode = ["pull", "push"], override = False):
-# 		tools.sync(check_last_run, mode, override)
+		# Stop watcher
+		tools.stop_watcher()
 
 
-# class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
+class PkgSyncCommand(sublime_plugin.ApplicationCommand):
 
-# 	def run(self):
-# 		# Load settings to provide an initial value for the input panel
-# 		s = sublime.load_settings("Package Syncing.sublime-settings")
-# 		sync_folder = s.get("sync_folder")
+	def is_enabled(self):
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		return s.get("sync", False) and s.get("sync_folder") != None
 
-# 		# Suggest user dir if nothing set or folder do not exists
-# 		if not sync_folder or not os.path.isdir(sync_folder):
-# 			sync_folder = os.path.expanduser("~")
+	def run(self, mode = ["pull", "push"], override = False):
+		
+		# Stop watcher and wait for the poll
+		tools.stop_watcher()
+		time.sleep(1.5)
+		
+		if "pull" in mode:
+			tools.pull_all(override)
+		if "push" in mode:
+			tools.push_all(override)
+		
+		# Restart watcher again
+		tools.start_watcher()
 
-# 		def on_done(path):
-# 			if not os.path.isdir(path):
-# 				os.makedirs(path)
 
-# 			if os.path.isdir(path):
-# 				if os.listdir(path):
-# 					if sublime.ok_cancel_dialog("The selected folder is not empty, would you like to continue and override your local settings?", "Continue"):
-# 						override = True
-# 					else:
-# 						self.window.show_input_panel("Sync Folder", path, on_done, None, None)
-# 						return
-# 				else:
-# 					override = False
+class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 
-# 				s.set("sync_folder", path)
-# 				s.set("sync", True)
+	def run(self):
+		# Load settings to provide an initial value for the input panel
+		s = sublime.load_settings("Package Syncing.sublime-settings")
+		sync_folder = s.get("sync_folder")
 
-# 				sublime.save_settings("Package Syncing.sublime-settings")
-# 				sublime.status_message("sync_folder successfully set to \"%s\"" % path)
-# 				# 
-# 				sublime.run_command("pkg_sync", {"check_last_run": False, "mode": ["pull", "push"], "override": override})
-# 			else:
-# 				sublime.error_message("Invalid Path %s" % path)
+		# Suggest user dir if nothing set or folder do not exists
+		if not sync_folder or not os.path.isdir(sync_folder):
+			sync_folder = os.path.expanduser("~")
 
-# 		self.window.show_input_panel("Sync Folder", sync_folder, on_done, None, None)
+		def on_done(path):
+			if not os.path.isdir(path):
+				os.makedirs(path)
+
+			if os.path.isdir(path):
+				if os.listdir(path):
+					if sublime.ok_cancel_dialog("The selected folder is not empty, would you like to continue and override your local settings?", "Continue"):
+						override = True
+					else:
+						self.window.show_input_panel("Sync Folder", path, on_done, None, None)
+						return
+				else:
+					override = False
+
+				# Adjust settings
+				s.set("sync", True)
+				s.set("sync_folder", path)
+
+				# Reset last-run file
+				file_path = os.path.join(sublime.packages_path(), "User", "Package Syncing.last-run")
+				if os.path.isfile(file_path):
+					os.remove(file_path)
+
+				sublime.save_settings("Package Syncing.sublime-settings")
+				sublime.status_message("sync_folder successfully set to \"%s\"" % path)
+				#
+				sublime.run_command("pkg_sync", {"mode": ["pull", "push"], "override": True})
+			else:
+				sublime.error_message("Invalid Path %s" % path)
+
+		self.window.show_input_panel("Sync Folder", sync_folder, on_done, None, None)
+
 
 def plugin_loaded():
 	tools.pull_all()
 	tools.push_all()
 	tools.start_watcher()
+
+def plugin_unloaded():
+	tools.stop_watcher()
 
 if sublime.version()[0] == "2":
 	plugin_loaded()

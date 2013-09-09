@@ -13,10 +13,10 @@
 	},
 	{
 		"caption": "Package Syncing: Push Settings",
-		"command": "pkg_sync", "args": {"check_last_run": false, "mode": ["push"]}
+		"command": "pkg_sync", "args": {"mode": ["push"]}
 	},
 	{
 		"caption": "Package Syncing: Pull Settings",
-		"command": "pkg_sync", "args": {"check_last_run": false, "mode": ["pull"]}
+		"command": "pkg_sync", "args": {"mode": ["pull"]}
 	}
 ]
