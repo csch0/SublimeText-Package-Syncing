@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 
-import fnmatch, logging, os, shutil, threading
+import fnmatch, json, logging, os, shutil, threading
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -41,6 +41,26 @@ def find_files(path):
 
 	return resources
 
+def load_last_data():
+	try:
+		with open(os.path.join(sublime.packages_path(), "User", "Package Syncing.last-run"), "r", encoding = "utf8") as f:
+			file_json = json.load(f)
+	except:
+		file_json = {}
+
+	last_local_data = file_json.get("last_local_data", {})
+	last_remote_data = file_json.get("last_remote_data", {})
+
+	return last_local_data, last_remote_data
+
+def save_last_data(local_data, remote_data):
+	try:
+		file_json = {"last_local_data": local_data, "last_remote_data": remote_data}
+		with open(os.path.join(sublime.packages_path(), "User", "Package Syncing.last-run"), "w", encoding = "utf8") as f:
+			json.dump(file_json, f, sort_keys = True, indent = 4)
+	except Exception as e:
+		logger.warning("Error while saving Packages Syncing.last-run %s", e)
+
 def push_settings():
 	logger.debug("push_settings started")
 
@@ -61,9 +81,7 @@ def push_settings():
 	remote_data = find_files(remote_dir)
 
 	# Get data of last sync
-	last_data = sublime.load_settings("Package Syncing.last-run")
-	last_local_data = last_data.get("local_data", {})
-	last_remote_data = last_data.get("remote_data", {})
+	last_local_data, last_remote_data = load_last_data()
 
 	deleted_local_data = [key for key in last_local_data if key not in local_data]
 	deleted_remote_data = [key for key in last_remote_data if key not in remote_data]
@@ -112,9 +130,8 @@ def push_settings():
 			logger.info("Updated %s", item["target"])
 
 	# Set data for next last sync
-	last_data.set("local_data", local_data)
-	last_data.set("remote_data", find_files(remote_dir))
-	sublime.save_settings("Package Syncing.last-run")
+	save_last_data(local_data, find_files(remote_dir))
+
 
 def pull_settings(override = False):
 	logger.debug("sync_pull started with override = %s", override)
@@ -138,9 +155,7 @@ def pull_settings(override = False):
 	remote_data = find_files(remote_dir)
 
 	# Get data of last sync
-	last_data = sublime.load_settings("Package Syncing.last-run")
-	last_local_data = last_data.get("local_data", {})
-	last_remote_data = last_data.get("remote_data", {})
+	last_local_data, last_remote_data = load_last_data()
 
 	deleted_local_data = [key for key in last_local_data if key not in local_data]
 	deleted_remote_data = [key for key in last_remote_data if key not in remote_data]
@@ -189,9 +204,7 @@ def pull_settings(override = False):
 			logger.info("Updated %s", item["target"])
 
 	# Set data for next last sync
-	last_data.set("local_data", find_files(local_dir))
-	last_data.set("remote_data", remote_data)
-	sublime.save_settings("Package Syncing.last-run")
+	save_last_data(local_data, find_files(remote_dir))
 
 	add_on_change_listener()
 
