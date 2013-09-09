@@ -3,12 +3,12 @@ import sublime, sublime_plugin
 import fnmatch, json, logging, os, shutil, threading
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 try:
-	from .st2 import *
+	from . import watcher
 except ValueError:
-	from st2 import *
+	from tools import watcher
 
 PKG_SYNC_TIMER = None
 PKG_SYNC_QUEUE = []
@@ -19,10 +19,10 @@ def find_files(path):
 	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
 	dirs_to_ignore = s.get("dirs_to_ignore", [])
 
-	logger.debug("path %s", path)
-	logger.debug("files_to_include %s", files_to_include)
-	logger.debug("files_to_ignore %s", files_to_ignore)
-	logger.debug("dirs_to_ignore %s", dirs_to_ignore)
+	# logger.debug("path %s", path)
+	# logger.debug("files_to_include %s", files_to_include)
+	# logger.debug("files_to_ignore %s", files_to_ignore)
+	# logger.debug("dirs_to_ignore %s", dirs_to_ignore)
 
 	resources = {}
 	for root, dir_names, file_names in os.walk(path):
@@ -61,8 +61,8 @@ def save_last_data(local_data, remote_data):
 	except Exception as e:
 		logger.warning("Error while saving Packages Syncing.last-run %s", e)
 
-def push_settings():
-	logger.debug("push_settings started")
+def push_all(override = False):
+	logger.debug("push_all started with override = %s", override)
 
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
@@ -96,45 +96,18 @@ def push_settings():
 		if key in deleted_remote_data:
 			pass
 		elif key not in remote_data:
-			diff += [{"type": "n", "target": os.path.join(remote_dir, key), "source": value["path"]}]
-		elif int(value["version"]) > int(remote_data[key]["version"]):
-			diff += [{"type": "u", "target": os.path.join(remote_dir, key), "source": value["path"]}]
+			diff += [dict({"type": "c", "key": key}, **value)]
+		elif int(value["version"]) > int(remote_data[key]["version"]) or override:
+			diff += [dict({"type": "m", "key": key}, **value)]
 
-	# Apply diff for push
 	for item in diff:
-		logger.debug("%s", item)
-		
-		# Perform delete item
-		if item["type"] == "d":
-			if os.path.isfile(item["target"]):
-				os.remove(item["target"])
-				logger.info("Deleted %s",  item["target"])
-			
-			# Check if dir is empty and remove it if
-			dir_name = os.path.dirname(item["target"])
-			if os.path.isdir(dir_name) and not os.listdir(dir_name):
-				os.rmdir(dir_name)
-		
-		# Perform new item
-		elif item["type"] == "n":
-			if not os.path.isdir(os.path.dirname(item["target"])):
-				os.mkdir(os.path.dirname(item["target"]))
-			shutil.copy2(item["source"], item["target"])
-			logger.info("Created %s", item["target"])
-		
-		# Perform updated item
-		elif item["type"] == "u":
-			if not os.path.isdir(os.path.dirname(item["target"])):
-				os.mkdir(os.path.dirname(item["target"]))
-			shutil.copy2(item["source"], item["target"])
-			logger.info("Updated %s", item["target"])
+		push(item)
 
 	# Set data for next last sync
-	save_last_data(local_data, find_files(remote_dir))
+	save_last_data(find_files(local_dir), find_files(remote_dir))
 
-
-def pull_settings(override = False):
-	logger.debug("sync_pull started with override = %s", override)
+def push(item):
+	logger.debug("push started for %s", item)
 
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
@@ -149,7 +122,73 @@ def pull_settings(override = False):
 		sublime.save_settings("Package Syncing.sublime-settings")
 		return
 
-	clear_on_change_listener()
+	# Get data of last sync
+	last_local_data, last_remote_data = load_last_data()
+
+	# Skip if file was just copied
+	try:
+		if item["type"] == "c" or item["type"] == "m":
+			if last_remote_data[item["key"]]["version"] == item["version"]:
+				logger.info("Already pushed")
+				return
+	except:
+		pass
+
+	# Make target file path and dir
+	target = os.path.join(remote_dir, item["key"])
+	target_dir = os.path.dirname(target)
+
+	if item["type"] == "c":
+		if not os.path.isdir(target_dir):
+			os.mkdir(os.path.dirname(target_dir))
+		shutil.copy2(item["path"], target)
+		logger.info("Created %s", target)
+		# 
+		last_local_data[item["key"]] = {"path": item["path"], "dir": item["dir"], "version": item["version"]}
+		last_remote_data[item["key"]] = {"path": target, "dir": item["dir"], "version": item["version"]}
+
+	elif item["type"] == "d":
+		if os.path.isfile(target):
+			os.remove(target)
+			logger.info("Deleted %s",  target)
+		
+		try:
+			del last_local_data[item["key"]]
+			del last_remote_data[item["key"]]
+		except:
+			pass
+		
+		# Check if dir is empty and remove it if
+		if os.path.isdir(target_dir) and not os.listdir(target_dir):
+			os.rmdir(target_dir)
+
+	elif item["type"] == "m":
+		if not os.path.isdir(target_dir):
+			os.mkdir(os.path.dirname(target_dir))
+		shutil.copy2(item["path"], target)
+		logger.info("Updated %s", target)
+		# 
+		last_local_data[item["key"]] = {"path": item["path"], "dir": item["dir"], "version": item["version"]}
+		last_remote_data[item["key"]] = {"path": target, "dir": item["dir"], "version": item["version"]}
+
+	# Set data for next last sync
+	save_last_data(last_local_data, last_remote_data)
+	
+def pull_all(override = False):
+	logger.debug("pull_all started with override = %s", override)
+
+	s = sublime.load_settings("Package Syncing.sublime-settings")
+	local_dir = os.path.join(sublime.packages_path(), "User")
+	remote_dir = s.get("sync_folder")
+
+	if not s.get("sync"):
+		return
+
+	if not os.path.isdir(remote_dir):
+		sublime.error_message("Invalid sync folder \"%s\", sync disabled! Please adjust your sync folder." % remote_dir)
+		s.set("sync", False)
+		sublime.save_settings("Package Syncing.sublime-settings")
+		return
 
 	local_data = find_files(local_dir)
 	remote_data = find_files(remote_dir)
@@ -170,100 +209,95 @@ def pull_settings(override = False):
 		if key in deleted_local_data:
 			pass
 		elif key not in local_data:
-			diff += [{"type": "n", "target": os.path.join(local_dir, key), "source": value["path"]}]
-		elif int(value["version"]) > int(local_data[key]["version"]):
-			diff += [{"type": "u", "target": os.path.join(local_dir, key), "source": value["path"]}]
-		elif override:
-			diff += [{"type": "o", "target": os.path.join(local_dir, key), "source": value["path"]}]
+			diff += [dict({"type": "c", "key": key}, **value)]
+		elif int(value["version"]) > int(local_data[key]["version"]) or override:
+			diff += [dict({"type": "m", "key": key}, **value)]
 
-	# Apply diff for pull
 	for item in diff:
-		logger.debug("%s", item)
-		if item["type"] == "d":
-			if os.path.isfile(item["target"]):
-				os.remove(item["target"])
-				logger.info("Deleted %s",  item["target"])
-			
-			# Check if dir is empty and remove it if
-			dir_name = os.path.dirname(item["target"])
-			if os.path.isdir(dir_name) and not os.listdir(dir_name):
-				os.rmdir(dir_name)
-
-		# Perform new item
-		elif item["type"] == "n":
-			if not os.path.isdir(os.path.dirname(item["target"])):
-				os.mkdir(os.path.dirname(item["target"]))
-			shutil.copy2(item["source"], item["target"])
-			logger.info("Created %s", item["target"])
-
-		# Perform updated item
-		elif item["type"] == "u" or item["type"] == "o":
-			if not os.path.isdir(os.path.dirname(item["target"])):
-				os.mkdir(os.path.dirname(item["target"]))
-			shutil.copy2(item["source"], item["target"])
-			logger.info("Updated %s", item["target"])
+		pull(item)
 
 	# Set data for next last sync
-	save_last_data(local_data, find_files(remote_dir))
+	save_last_data(find_files(local_dir), find_files(remote_dir))
 
-	add_on_change_listener()
+def pull(item):
+	logger.debug("pull started for %s", item)
 
-def do_sync():
-	global PKG_SYNC_QUEUE
-	
-	logger.debug("on_done %s", PKG_SYNC_QUEUE)
-	for item in PKG_SYNC_QUEUE:
-		for mode in item.split(".", 1)[0].split("|"):
-			if "pull" in mode:
-				pull_settings(item.split(".", 2)[1] == "True")
-			if "push" in mode:
-				push_settings()
+	s = sublime.load_settings("Package Syncing.sublime-settings")
+	local_dir = os.path.join(sublime.packages_path(), "User")
+	remote_dir = s.get("sync_folder")
 
-	PKG_SYNC_QUEUE = []
+	if not s.get("sync"):
+		return
 
-def sync(check_last_run = True, mode = ["pull", "push"], override = False):
-	global PKG_SYNC_TIMER
-	global PKG_SYNC_QUEUE
-	
-	logger.debug("sync %s %s %s", check_last_run, mode, override)
-	
-	# Save mode_string
-	mode_string = "%s.%s" % ("|".join(mode), override)
-	if mode_string not in PKG_SYNC_QUEUE:
-		PKG_SYNC_QUEUE += [mode_string]
+	if not os.path.isdir(remote_dir):
+		sublime.error_message("Invalid sync folder \"%s\", sync disabled! Please adjust your sync folder." % remote_dir)
+		s.set("sync", False)
+		sublime.save_settings("Package Syncing.sublime-settings")
+		return
 
-	if check_last_run:
-		if not PKG_SYNC_TIMER or not PKG_SYNC_TIMER.is_alive():
-			s = sublime.load_settings("Package Syncing.sublime-settings")
-			sync_interval = s.get("sync_interval", 10)
+	# Get data of last sync
+	last_local_data, last_remote_data = load_last_data()
 
-			# Start the timer
-			PKG_SYNC_TIMER = threading.Timer(sync_interval, do_sync)
-			PKG_SYNC_TIMER.start()
-	else:
-		do_sync()
+	# Skip if file was just copied
+	try:
+		if item["type"] == "c" or item["type"] == "m":
+			if last_local_data[item["key"]]["version"] == item["version"]:
+				logger.info("Already pulled")
+				return
+	except:
+		pass
 
-def find_settings(user = False):
-	settings = []
-	for item in find_resources("*.sublime-settings"):
-		file_name = os.path.basename(item)
-		if user:
-			if item[8:14] == "/User/" and file_name not in ["Package Syncing.sublime-settings"]:
-				settings += [file_name]
-		else:
-			if item[8:14] != "/User/" and file_name not in ["Package Syncing.sublime-settings"]:
-				settings += [file_name]
-	return settings
+	# Make target file path and dir
+	target = os.path.join(local_dir, item["key"])
+	target_dir = os.path.dirname(target)
 
-def add_on_change_listener():
-	for name in find_settings():
-		# logger.debug("add_on_change_listener %s", name)
-		s = sublime.load_settings(name)
-		s.clear_on_change("package_sync")
-		s.add_on_change("package_sync", push_settings)
+	if item["type"] == "c":
+		if not os.path.isdir(target_dir):
+			os.mkdir(os.path.dirname(target_dir))
+		shutil.copy2(item["path"], target)
+		logger.info("Created %s", target)
+		# 
+		last_local_data[item["key"]] = {"path": target, "dir": item["dir"], "version": item["version"]}
+		last_remote_data[item["key"]] = {"path": item["path"], "dir": item["dir"], "version": item["version"]}
 
-def clear_on_change_listener():
-	for name in find_settings():
-		# logger.debug("clear_on_change_listener %s", name)
-		s = sublime.load_settings(name)
-		s.clear_on_change("package_sync")
+	elif item["type"] == "d":
+		if os.path.isfile(target):
+			os.remove(target)
+			logger.info("Deleted %s",  target)
+
+		try:
+			del last_local_data[item["key"]]
+			del last_remote_data[item["key"]]
+		except:
+			pass
+		
+		# Check if dir is empty and remove it if
+		if os.path.isdir(target_dir) and not os.listdir(target_dir):
+			os.rmdir(target_dir)
+
+	elif item["type"] == "m":
+		if not os.path.isdir(target_dir):
+			os.mkdir(os.path.dirname(target_dir))
+		shutil.copy2(item["path"], target)
+		logger.info("Updated %s", target)
+		# 
+		last_local_data[item["key"]] = {"path": target, "dir": item["dir"], "version": item["version"]}
+		last_remote_data[item["key"]] = {"path": item["path"], "dir": item["dir"], "version": item["version"]}
+
+	# Set data for next last sync
+	save_last_data(last_local_data, last_remote_data)
+
+def start_watcher():
+	s = sublime.load_settings("Package Syncing.sublime-settings")
+	local_dir = os.path.join(sublime.packages_path(), "User")
+	remote_dir = s.get("sync_folder")
+	# 
+	files_to_include = s.get("files_to_include", [])
+	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
+	dirs_to_ignore = s.get("dirs_to_ignore", [])
+	# 
+	watcher_remote = watcher.WatcherThread(remote_dir, pull, files_to_include, files_to_ignore, dirs_to_ignore)
+	watcher_remote.start()
+	#
+	watcher_local = watcher.WatcherThread(local_dir, push, files_to_include, files_to_ignore, dirs_to_ignore)
+	watcher_local.start()
