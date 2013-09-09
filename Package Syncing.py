@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 
-import fnmatch, os.path, logging, time
+import fnmatch, os.path, logging
 logging.basicConfig(level = logging.INFO, format="[%(asctime)s - %(levelname)s - %(name)s] %(message)s")
 
 try:
@@ -46,19 +46,7 @@ class PkgSyncCommand(sublime_plugin.ApplicationCommand):
 		return s.get("sync", False) and s.get("sync_folder") != None
 
 	def run(self, mode = ["pull", "push"], override = False):
-		
-		# Stop watcher and wait for the poll
-		tools.stop_watcher()
-		time.sleep(1.5)
-		
-		if "pull" in mode:
-			tools.pull_all(override)
-		if "push" in mode:
-			tools.push_all(override)
-		
-		# Restart watcher again
-		tools.start_watcher()
-
+		tools.Sync(mode, override).start()
 
 class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 

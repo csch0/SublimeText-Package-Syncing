@@ -1,6 +1,6 @@
 import sublime, sublime_plugin
 
-import fnmatch, json, logging, os, shutil, threading
+import fnmatch, json, logging, os, shutil, time, threading
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -9,6 +9,28 @@ try:
 	from . import watcher
 except ValueError:
 	from tools import watcher
+
+class Sync(threading.Thread):
+
+	def __init__(self, mode = ["pull", "push"], override = False):
+		
+		self.mode = mode
+		self.override = override
+
+		threading.Thread.__init__(self)
+
+	def run(self):
+		# Stop watcher and wait for the poll
+		stop_watcher()
+		time.sleep(1.5)
+		
+		if "pull" in self.mode:
+			pull_all(self.override)
+		if "push" in self.mode:
+			push_all(self.override)
+		
+		# Restart watcher again
+		start_watcher()
 
 
 def find_files(path):
@@ -127,7 +149,7 @@ def push(item):
 	try:
 		if item["type"] == "c" or item["type"] == "m":
 			if last_remote_data[item["key"]]["version"] == item["version"]:
-				logger.info("Already pushed")
+				logger.debug("Already pushed")
 				return
 	except:
 		pass
@@ -240,7 +262,7 @@ def pull(item):
 	try:
 		if item["type"] == "c" or item["type"] == "m":
 			if last_local_data[item["key"]]["version"] == item["version"]:
-				logger.info("Already pulled")
+				logger.debug("Already pulled")
 				return
 	except:
 		pass
