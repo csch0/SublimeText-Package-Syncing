@@ -1,7 +1,7 @@
 import sublime, sublime_plugin
 
 import fnmatch, os.path, logging
-logging.basicConfig(level = logging.INFO, format="[%(asctime)s - %(levelname)s - %(name)s] %(message)s")
+log = logging.getLogger(__name__)
 
 try:
 	from .package_syncing import tools

@@ -1,14 +1,12 @@
 import sublime, sublime_plugin
-
-import fnmatch, json, logging, os, shutil, time, threading
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+import fnmatch, json, os, shutil, time, threading
 
 try:
-	from . import watcher
+	from . import logging, watcher
 except ValueError:
-	from tools import watcher
+	from tools import logging, watcher
+
+log = logging.getLogger(__name__)
 
 class Sync(threading.Thread):
 
@@ -20,7 +18,7 @@ class Sync(threading.Thread):
 		threading.Thread.__init__(self)
 
 	def run(self):
-		logger.info("Package Syncing - Start Complete Sync")
+		print("Package Syncing: Start Complete Sync")
 
 		s = sublime.load_settings("Package Syncing.sublime-settings")
 		sync_interval = s.get("sync_interval", 1)
@@ -37,7 +35,7 @@ class Sync(threading.Thread):
 		# Restart watcher again
 		start_watcher()
 
-		logger.info("Package Syncing - End Complete Sync")
+		print("Package Syncing: End Complete Sync")
 
 
 def find_files(path):
@@ -46,10 +44,10 @@ def find_files(path):
 	files_to_ignore = s.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
 	dirs_to_ignore = s.get("dirs_to_ignore", [])
 
-	logger.debug("path %s", path)
-	logger.debug("files_to_include %s", files_to_include)
-	logger.debug("files_to_ignore %s", files_to_ignore)
-	logger.debug("dirs_to_ignore %s", dirs_to_ignore)
+	log.debug("path %s", path)
+	log.debug("files_to_include %s", files_to_include)
+	log.debug("files_to_ignore %s", files_to_ignore)
+	log.debug("dirs_to_ignore %s", dirs_to_ignore)
 
 	resources = {}
 	for root, dir_names, file_names in os.walk(path):
@@ -86,10 +84,10 @@ def save_last_data(local_data, remote_data):
 		with open(os.path.join(sublime.packages_path(), "User", "Package Syncing.last-run"), "w", encoding = "utf8") as f:
 			json.dump(file_json, f, sort_keys = True, indent = 4)
 	except Exception as e:
-		logger.warning("Error while saving Packages Syncing.last-run %s", e)
+		log.warning("Error while saving Packages Syncing.last-run %s", e)
 
 def push_all(override = False):
-	logger.debug("push_all started with override = %s", override)
+	log.debug("push_all started with override = %s", override)
 
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
@@ -113,10 +111,10 @@ def push_all(override = False):
 	deleted_local_data = [key for key in last_local_data if key not in local_data]
 	deleted_remote_data = [key for key in last_remote_data if key not in remote_data]
 
-	logger.debug("local_data: %s", local_data)
-	logger.debug("remote_data: %s", remote_data)
-	logger.debug("deleted_local_data: %s", deleted_local_data)
-	logger.debug("deleted_remote_data: %s", deleted_remote_data)
+	log.debug("local_data: %s", local_data)
+	log.debug("remote_data: %s", remote_data)
+	log.debug("deleted_local_data: %s", deleted_local_data)
+	log.debug("deleted_remote_data: %s", deleted_remote_data)
 
 	diff = [{"type": "d", "key": key} for key in last_local_data if key not in local_data]
 	for key, value in local_data.items():
@@ -134,7 +132,7 @@ def push_all(override = False):
 	save_last_data(find_files(local_dir), find_files(remote_dir))
 
 def push(item):
-	logger.debug("push started for %s", item)
+	log.debug("push started for %s", item)
 
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
@@ -156,7 +154,7 @@ def push(item):
 	try:
 		if item["type"] == "c" or item["type"] == "m":
 			if last_remote_data[item["key"]]["version"] == item["version"]:
-				logger.debug("Already pushed")
+				log.debug("Already pushed")
 				return
 	except:
 		pass
@@ -169,7 +167,7 @@ def push(item):
 		if not os.path.isdir(target_dir):
 			os.mkdir(target_dir)
 		shutil.copy2(item["path"], target)
-		logger.info("Created %s", target)
+		log.info("Created %s", target)
 		# 
 		last_local_data[item["key"]] = {"path": item["path"], "dir": item["dir"], "version": item["version"]}
 		last_remote_data[item["key"]] = {"path": target, "dir": item["dir"], "version": item["version"]}
@@ -177,7 +175,7 @@ def push(item):
 	elif item["type"] == "d":
 		if os.path.isfile(target):
 			os.remove(target)
-			logger.info("Deleted %s",  target)
+			log.info("Deleted %s",  target)
 		
 		try:
 			del last_local_data[item["key"]]
@@ -193,7 +191,7 @@ def push(item):
 		if not os.path.isdir(target_dir):
 			os.mkdir(target_dir)
 		shutil.copy2(item["path"], target)
-		logger.info("Updated %s", target)
+		log.info("Updated %s", target)
 		# 
 		last_local_data[item["key"]] = {"path": item["path"], "dir": item["dir"], "version": item["version"]}
 		last_remote_data[item["key"]] = {"path": target, "dir": item["dir"], "version": item["version"]}
@@ -202,7 +200,7 @@ def push(item):
 	save_last_data(last_local_data, last_remote_data)
 	
 def pull_all(override = False):
-	logger.debug("pull_all started with override = %s", override)
+	log.debug("pull_all started with override = %s", override)
 
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
@@ -226,10 +224,10 @@ def pull_all(override = False):
 	deleted_local_data = [key for key in last_local_data if key not in local_data]
 	deleted_remote_data = [key for key in last_remote_data if key not in remote_data]
 
-	logger.debug("local_data: %s", local_data)
-	logger.debug("remote_data: %s", remote_data)
-	logger.debug("deleted_local_data: %s", deleted_local_data)
-	logger.debug("deleted_remote_data: %s", deleted_remote_data)
+	log.debug("local_data: %s", local_data)
+	log.debug("remote_data: %s", remote_data)
+	log.debug("deleted_local_data: %s", deleted_local_data)
+	log.debug("deleted_remote_data: %s", deleted_remote_data)
 
 	diff = [{"type": "d", "key": key} for key in last_remote_data if key not in remote_data]
 	for key, value in remote_data.items():
@@ -247,7 +245,7 @@ def pull_all(override = False):
 	save_last_data(find_files(local_dir), find_files(remote_dir))
 
 def pull(item):
-	logger.debug("pull started for %s", item)
+	log.debug("pull started for %s", item)
 
 	s = sublime.load_settings("Package Syncing.sublime-settings")
 	local_dir = os.path.join(sublime.packages_path(), "User")
@@ -269,7 +267,7 @@ def pull(item):
 	try:
 		if item["type"] == "c" or item["type"] == "m":
 			if last_local_data[item["key"]]["version"] == item["version"]:
-				logger.debug("Already pulled")
+				log.debug("Already pulled")
 				return
 	except:
 		pass
@@ -282,7 +280,7 @@ def pull(item):
 		if not os.path.isdir(target_dir):
 			os.mkdir(target_dir)
 		shutil.copy2(item["path"], target)
-		logger.info("Created %s", target)
+		log.info("Created %s", target)
 		# 
 		last_local_data[item["key"]] = {"path": target, "dir": item["dir"], "version": item["version"]}
 		last_remote_data[item["key"]] = {"path": item["path"], "dir": item["dir"], "version": item["version"]}
@@ -290,7 +288,7 @@ def pull(item):
 	elif item["type"] == "d":
 		if os.path.isfile(target):
 			os.remove(target)
-			logger.info("Deleted %s",  target)
+			log.info("Deleted %s",  target)
 
 		try:
 			del last_local_data[item["key"]]
@@ -306,7 +304,7 @@ def pull(item):
 		if not os.path.isdir(target_dir):
 			os.mkdir(target_dir)
 		shutil.copy2(item["path"], target)
-		logger.info("Updated %s", target)
+		log.info("Updated %s", target)
 		# 
 		last_local_data[item["key"]] = {"path": target, "dir": item["dir"], "version": item["version"]}
 		last_remote_data[item["key"]] = {"path": item["path"], "dir": item["dir"], "version": item["version"]}

@@ -1,7 +1,11 @@
 import errno, fnmatch, logging, os, stat, threading, time
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+try:
+	from . import logging
+except ValueError:
+	from tools import logging
+
+log = logging.getLogger(__name__)
 
 class WatcherThread(threading.Thread):
 
@@ -44,7 +48,7 @@ class Watcher(object):
 
 	def __del__(self):		
 		for key, value in self.files_map.items():
-			logger.debug("unwatching %s" % value["path"])
+			log.debug("unwatching %s" % value["path"])
 
 	def listdir(self, walk = False):
 		items = []
@@ -96,7 +100,7 @@ class Watcher(object):
 				self.watch(item)
 
 	def watch(self, item):
-		logger.debug("watching %s" % item["path"])
+		log.debug("watching %s" % item["path"])
 		self.files_map[item["key"]] = item
 
 		# Run callback if file name changes
@@ -104,7 +108,7 @@ class Watcher(object):
 			self.callback(dict({"type": "c"}, **item))
 
 	def unwatch(self, item):
-		logger.debug("unwatching %s" % item["path"])
+		log.debug("unwatching %s" % item["path"])
 		del self.files_map[item["key"]]
 		
 		# Run callback if file name changes
