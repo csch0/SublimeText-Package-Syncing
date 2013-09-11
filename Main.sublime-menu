@@ -33,6 +33,15 @@
 							{
 								"caption": "Pull Settings",
 								"command": "pkg_sync", "args": {"mode": ["pull"]}
+							},
+							{ "caption": "-" },
+							{
+								"caption": "Settings – Default", 
+								"command": "open_file", "args": { "file": "${packages}/Package Syncing/Package Syncing.sublime-settings" }
+							},
+							{
+								"caption": "Settings – User",
+								"command": "open_file", "args": { "file": "${packages}/User/Package Syncing.sublime-settings" }
 							}
 						]
 					}
