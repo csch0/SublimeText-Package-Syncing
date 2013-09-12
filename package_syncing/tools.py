@@ -1,5 +1,5 @@
 import sublime, sublime_plugin
-import fnmatch, json, os, shutil, time, threading
+import fnmatch, importlib, json, os, shutil, time, threading
 
 try:
 	from . import logging, watcher
@@ -323,6 +323,19 @@ def pull(item):
 
 	# Set data for next last sync
 	save_last_data(last_local_data, last_remote_data)
+
+	# If Package Control setting file, check for missing packages
+	if item["key"] == "Package Control.sublime-settings":
+		# Reset last-run file
+		file_path = os.path.join(sublime.packages_path(), "User", "Package Syncing.last-run")
+		if os.path.isfile(file_path):
+			os.remove(file_path)
+
+		# Import package_cleanup
+		package_cleanup = importlib.import_module("Package Control.package_control.package_cleanup")
+		package_control_cleaner = package_cleanup.PackageCleanup()
+		package_control_cleaner.start()
+		
 
 watcher_local = None
 watcher_remote = None

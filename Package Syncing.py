@@ -53,6 +53,7 @@ class PkgSyncCommand(sublime_plugin.ApplicationCommand):
 		else:
 			print("Skip sync, already running")
 
+
 class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 
 	def run(self):
@@ -103,7 +104,7 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 
 
 def plugin_loaded():
-	sublime.set_timeout(lambda: sublime.run_command("pkg_sync", {"mode": ["pull", "push"]}), 2000)	
+	sublime.set_timeout(lambda: sublime.run_command("pkg_sync", {"mode": ["pull", "push"]}), 1000)
 
 def plugin_unloaded():
 	tools.stop_watcher()
