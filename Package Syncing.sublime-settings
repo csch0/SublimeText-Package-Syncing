@@ -1,4 +1,6 @@
 {
+	"log": false,
+
 	// General sync settings like the location
 	"sync": false,
 	"sync_folder": "",
