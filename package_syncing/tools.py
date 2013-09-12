@@ -326,16 +326,18 @@ def pull(item):
 
 	# If Package Control setting file, check for missing packages
 	if item["key"] == "Package Control.sublime-settings":
-		# Reset last-run file
-		file_path = os.path.join(sublime.packages_path(), "User", "Package Syncing.last-run")
-		if os.path.isfile(file_path):
-			os.remove(file_path)
+		try:
+			# Reset last-run file
+			file_path = os.path.join(sublime.packages_path(), "User", "Package Control.last-run")
+			if os.path.isfile(file_path):
+				os.remove(file_path)
 
-		# Import package_cleanup
-		package_cleanup = importlib.import_module("Package Control.package_control.package_cleanup")
-		package_control_cleaner = package_cleanup.PackageCleanup()
-		package_control_cleaner.start()
-		
+			# Import package_cleanup
+			package_cleanup = importlib.import_module("Package Control.package_control.package_cleanup")
+			package_control_cleaner = package_cleanup.PackageCleanup()
+			sublime.set_timeout(package_control_cleaner.start(), 1000)
+		except:
+			log.error("Could not load Package Control")
 
 watcher_local = None
 watcher_remote = None
