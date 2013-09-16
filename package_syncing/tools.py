@@ -90,15 +90,26 @@ def perform_package_control(manager, to_install, to_remove):
 watcher_local = None
 watcher_remote = None
 
-def start_watcher(setting):
+def on_change():
+	settings = load_settings()
+	
+	def reset():
+		stop_watcher()		
+		time.sleep(settings.get("sync_interval") + 0.5)
+		start_watcher(settings)
+	
+	t = threading.Thread(target = reset)
+	t.start()
+
+def start_watcher(settings):
 	local_dir = os.path.join(sublime.packages_path(), "User")
-	remote_dir = setting.get("sync_folder")
+	remote_dir = settings.get("sync_folder")
 	# 
-	sync_interval = setting.get("sync_interval")
+	sync_interval = settings.get("sync_interval")
 	# 
-	files_to_include = setting.get("files_to_include", [])
-	files_to_ignore = setting.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
-	dirs_to_ignore = setting.get("dirs_to_ignore", [])
+	files_to_include = settings.get("files_to_include", [])
+	files_to_ignore = settings.get("files_to_ignore", []) + ["Package Syncing.sublime-settings", "Package Syncing.last-run"]
+	dirs_to_ignore = settings.get("dirs_to_ignore", [])
 	# 
 	global watcher_local
 	global watcher_remote
@@ -110,7 +121,7 @@ def start_watcher(setting):
 	watcher_local.start()
 
 def stop_watcher():
-	
+
 	global watcher_local
 	global watcher_remote
 

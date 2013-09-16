@@ -72,6 +72,7 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 	def run(self):
 		# Load settings to provide an initial value for the input panel
 		s = sublime.load_settings("Package Syncing.sublime-settings")
+		s.clear_on_change("package_syncing")
 		sync_folder = s.get("sync_folder")
 
 		# Suggest user dir if nothing set or folder do not exists
@@ -113,13 +114,25 @@ class PkgSyncFolderCommand(sublime_plugin.WindowCommand):
 			else:
 				sublime.error_message("Invalid Path %s" % path)
 
+			# Add on on_change listener
+			s.add_on_change("package_syncing", tools.on_change)
+
 		self.window.show_input_panel("Sync Folder", sync_folder, on_done, None, None)
 
 
-def plugin_loaded():
+def plugin_loaded():	
+	s = sublime.load_settings("Package Syncing.sublime-settings")
+	s.clear_on_change("package_syncing")
+	s.add_on_change("package_syncing", tools.on_change)
+
+	# Run pkg_sync
 	sublime.set_timeout(lambda: sublime.run_command("pkg_sync", {"mode": ["pull", "push"]}), 1000)
 
 def plugin_unloaded():
+	s = sublime.load_settings("Package Syncing.sublime-settings")
+	s.clear_on_change("package_syncing")
+	
+	# Stop folder watcher
 	tools.stop_watcher()
 
 if sublime.version()[0] == "2":
