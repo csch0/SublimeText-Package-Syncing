@@ -1,8 +1,24 @@
 import sublime, sublime_plugin
-import fnmatch, functools, importlib, json, os, shutil, sys, time, threading
+import fnmatch, functools, json, os, shutil, sys, time, threading
 
-from . import logger, watcher
-log = logger.getLogger(__name__)
+try:
+	from . import logger, watcher
+	log = logger.getLogger(__name__)
+except:
+	from package_syncing import logger, watcher
+	log = logger.getLogger(__name__)
+
+def load_settings():
+	s = sublime.load_settings("Package Syncing.sublime-settings")
+	return { 
+		"log": s.get("log", False),
+		"sync": s.get("sync", False),
+		"sync_folder": s.get("sync_folder", False),
+		"sync_interval": s.get("sync_interval", 1),
+		"files_to_include": s.get("files_to_include", []),
+		"files_to_ignore": s.get("files_to_ignore", []),
+		"dirs_to_ignore": s.get("dirs_to_ignore", [])
+	}
 
 def load_last_data():
 	try:
@@ -33,8 +49,7 @@ def load_installed_packages(path):
 	
 	return file_json.get("installed_packages", [])
 
-def package_control(previous_installed_packages):
-	
+def package_control(previous_installed_packages):	
 	s = sublime.load_settings("Package Control.sublime-settings")
 	installed_packages = s.get("installed_packages", [])
 
@@ -48,24 +63,25 @@ def package_control(previous_installed_packages):
 	thread.start()
 
 def perform_package_control(to_install, to_remove):
-
 	log.debug("%s %s", to_install, to_remove)
+	try:
+		# Import package_manager
+		mod = sys.modules["package_control.package_manager" if sublime.version()[0] == "2" else "Package Control.package_control.package_manager"]
+		package_manager = mod.PackageManager()
 
-	# Import package_manager
-	mod = sys.modules["Package Control.package_control.package_manager"]
-	package_manager = mod.PackageManager()
+		# check for installed packages
+		for item in to_install:
+			print("Package Syncing: Installing %s" % item)
+			package_manager.install_package(item)
+			print("Package Syncing: Installed %s by using Package Control" % item)
 
-	# check for installed packages
-	for item in to_install:
-		print("Package Syncing: Installing %s" % item)
-		package_manager.install_package(item)
-		print("Package Syncing: Installed %s by using Package Control" % item)
-
-	# check for removed packages
-	for item in to_remove:
-		print("Package Syncing: Removing %s" % item)
-		package_manager.remove_package(item)
-		print("Package Syncing: Removed %s" % item)
+		# check for removed packages
+		for item in to_remove:
+			print("Package Syncing: Removing %s" % item)
+			package_manager.remove_package(item)
+			print("Package Syncing: Removed %s" % item)
+	except:
+		print("Package Syncing: Cannot load Package Controller")
 
 watcher_local = None
 watcher_remote = None

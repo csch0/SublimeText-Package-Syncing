@@ -1,6 +1,7 @@
 import sublime, sublime_plugin
 import logging
 
+LOG = False
 TRACE = 9
 
 logging.addLevelName("TRACE", TRACE)
@@ -10,8 +11,7 @@ BASIC_FORMAT = "[%(asctime)s - %(levelname)s - %(filename)s %(funcName)s] %(mess
 class CustomLogger(logging.Logger):
 
 	def isEnabledFor(self, level):
-		s = sublime.load_settings("Package Syncing.sublime-settings")
-		if not s.get("log", False):
+		if not LOG:
 			return
 		return level >= self.getEffectiveLevel()
 

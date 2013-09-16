@@ -78,7 +78,7 @@ class Watcher(object):
 			self.files_map[key]["version"] = file_mtime
 
 			# Run callback if file changed
-			sublime.run_command(self.callback, {"item": dict({"type": "m"}, **value)})
+			sublime.set_timeout(lambda: sublime.run_command(self.callback, {"item": dict({"type": "m"}, **value)}), 0)
 
 	def update_files(self):
 		items = []
@@ -102,11 +102,12 @@ class Watcher(object):
 
 		# Run callback if file created
 		if self.init_done:
-			sublime.run_command(self.callback, {"item": dict({"type": "c"}, **item)})
+			sublime.set_timeout(lambda: sublime.run_command(self.callback, {"item": dict({"type": "c"}, **item)}), 0)
+			
 
 	def unwatch(self, item):
 		log.debug("unwatching %s" % item["path"])
 		del self.files_map[item["key"]]
 		
 		# Run callback if file deleted
-		sublime.run_command(self.callback, {"item": dict({"type": "d"}, **item)})
+		sublime.set_timeout(lambda: sublime.run_command(self.callback, {"item": dict({"type": "d"}, **item)}), 0)

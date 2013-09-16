@@ -1,8 +1,12 @@
 import sublime, sublime_plugin
 import os.path
 
-from .package_syncing import logger, thread, thread_manager, tools
-log = logger.getLogger(__name__)
+try:
+	from .package_syncing import logger, thread, thread_manager, tools
+	log = logger.getLogger(__name__)
+except ValueError:
+	from package_syncing import logger, thread, thread_manager, tools
+	log = logger.getLogger(__name__)
 
 q = thread_manager.Queue()
 
@@ -43,8 +47,7 @@ class PkgSyncCommand(sublime_plugin.ApplicationCommand):
 
 	def run(self, mode = ["pull", "push"], override = False):
 		if not q.has("sync"):
-			settings = sublime.load_settings("Package Syncing.sublime-settings")
-			t = thread.Sync(settings, mode, override)
+			t = thread.Sync(tools.load_settings(), mode, override)
 			q.add(t, "sync")
 		else:
 			print("Package Syncing: Already running")
@@ -53,16 +56,14 @@ class PkgSyncCommand(sublime_plugin.ApplicationCommand):
 class PkgSyncPullItemCommand(sublime_plugin.ApplicationCommand):
 
 	def run(self, item):
-		settings = sublime.load_settings("Package Syncing.sublime-settings")
-		t = thread.Sync(settings, mode = ["pull"], item = item)
+		t = thread.Sync(tools.load_settings(), mode = ["pull"], item = item)
 		q.add(t)
 
 
 class PkgSyncPushItemCommand(sublime_plugin.ApplicationCommand):
 
 	def run(self, item):
-		settings = sublime.load_settings("Package Syncing.sublime-settings")
-		t = thread.Sync(settings, mode = ["push"], item = item)
+		t = thread.Sync(tools.load_settings(), mode = ["push"], item = item)
 		q.add(t)
 
 

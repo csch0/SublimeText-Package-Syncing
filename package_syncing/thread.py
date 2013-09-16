@@ -196,18 +196,8 @@ class Sync(threading.Thread):
 	def push_all(self):
 		log.debug("push_all started with override = %s" % self.override)
 
-		s = sublime.load_settings("Package Syncing.sublime-settings")
 		local_dir = os.path.join(sublime.packages_path(), "User")
-		remote_dir = s.get("sync_folder")
-
-		if not s.get("sync"):
-			return
-
-		if not os.path.isdir(remote_dir):
-			sublime.error_message("Invalid sync folder \"%s\", sync disabled! Please adjust your sync folder." % remote_dir)
-			s.set("sync", False)
-			sublime.save_settings("Package Syncing.sublime-settings")
-			return
+		remote_dir = self.settings.get("sync_folder")
 
 		local_data = self.find_files(local_dir)
 		remote_data = self.find_files(remote_dir)
