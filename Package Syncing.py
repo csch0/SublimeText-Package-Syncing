@@ -1,14 +1,10 @@
 import sublime, sublime_plugin
+import os.path
 
-import fnmatch, os.path, logging
-log = logging.getLogger(__name__)
+from .package_syncing import logger, thread, thread_manager, tools
+log = logger.getLogger(__name__)
 
-try:
-	from .package_syncing import tools
-except ValueError:
-	from package_syncing import tools
-
-sync = None
+q = thread_manager.Queue()
 
 class PkgSyncEnableCommand(sublime_plugin.WindowCommand):
 
@@ -46,12 +42,28 @@ class PkgSyncCommand(sublime_plugin.ApplicationCommand):
 		return s.get("sync", False) and s.get("sync_folder") != None
 
 	def run(self, mode = ["pull", "push"], override = False):
-		global sync
-		if not sync or not sync.is_alive():
-			sync = tools.Sync(mode, override)
-			sync.start()
+		if not q.has("sync"):
+			settings = sublime.load_settings("Package Syncing.sublime-settings")
+			t = thread.Sync(settings, mode, override)
+			q.add(t, "sync")
 		else:
-			print("Skip sync, already running")
+			print("Package Syncing: Already running")
+
+
+class PkgSyncPullItemCommand(sublime_plugin.ApplicationCommand):
+
+	def run(self, item):
+		settings = sublime.load_settings("Package Syncing.sublime-settings")
+		t = thread.Sync(settings, mode = ["pull"], item = item)
+		q.add(t)
+
+
+class PkgSyncPushItemCommand(sublime_plugin.ApplicationCommand):
+
+	def run(self, item):
+		settings = sublime.load_settings("Package Syncing.sublime-settings")
+		t = thread.Sync(settings, mode = ["push"], item = item)
+		q.add(t)
 
 
 class PkgSyncFolderCommand(sublime_plugin.WindowCommand):

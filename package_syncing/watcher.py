@@ -1,11 +1,8 @@
-import errno, fnmatch, logging, os, stat, threading, time
+import sublime, sublime_plugin
+import errno, fnmatch, os, stat, threading, time
 
-try:
-	from . import logging
-except ValueError:
-	from tools import logging
-
-log = logging.getLogger(__name__)
+from . import logger
+log = logger.getLogger(__name__)
 
 class WatcherThread(threading.Thread):
 
@@ -80,8 +77,8 @@ class Watcher(object):
 		if file_mtime != value["version"]:
 			self.files_map[key]["version"] = file_mtime
 
-			# Run callback if file name changes
-			self.callback(dict({"type": "m"}, **value))
+			# Run callback if file changed
+			sublime.run_command(self.callback, {"item": dict({"type": "m"}, **value)})
 
 	def update_files(self):
 		items = []
@@ -103,13 +100,13 @@ class Watcher(object):
 		log.debug("watching %s" % item["path"])
 		self.files_map[item["key"]] = item
 
-		# Run callback if file name changes
+		# Run callback if file created
 		if self.init_done:
-			self.callback(dict({"type": "c"}, **item))
+			sublime.run_command(self.callback, {"item": dict({"type": "c"}, **item)})
 
 	def unwatch(self, item):
 		log.debug("unwatching %s" % item["path"])
 		del self.files_map[item["key"]]
 		
-		# Run callback if file name changes
-		self.callback(dict({"type": "d"}, **item))
+		# Run callback if file deleted
+		sublime.run_command(self.callback, {"item": dict({"type": "d"}, **item)})
