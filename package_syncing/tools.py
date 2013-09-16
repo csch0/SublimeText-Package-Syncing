@@ -1,10 +1,13 @@
 import sublime, sublime_plugin
 import fnmatch, functools, json, os, shutil, sys, time, threading
 
+if sublime.version()[0] == "2":
+	from codecs import open
+
 try:
 	from . import logger, watcher
 	log = logger.getLogger(__name__)
-except:
+except:	
 	from package_syncing import logger, watcher
 	log = logger.getLogger(__name__)
 
@@ -59,28 +62,29 @@ def package_control(previous_installed_packages):
 	s.set("installed_packages", installed_packages + to_remove)
 	sublime.save_settings("Package Control.sublime-settings")
 
-	thread = threading.Thread(target = functools.partial(perform_package_control, to_install, to_remove))
+	# Import package_manager
+	mod = sys.modules["package_control.package_manager" if sublime.version()[0] == "2" else "Package Control.package_control.package_manager"]
+	manager = mod.PackageManager()
+
+	thread = threading.Thread(target = functools.partial(perform_package_control, manager, to_install, to_remove))
 	thread.start()
 
-def perform_package_control(to_install, to_remove):
+def perform_package_control(manager, to_install, to_remove):
 	log.debug("%s %s", to_install, to_remove)
-	try:
-		# Import package_manager
-		mod = sys.modules["package_control.package_manager" if sublime.version()[0] == "2" else "Package Control.package_control.package_manager"]
-		package_manager = mod.PackageManager()
 
+	try:
 		# check for installed packages
 		for item in to_install:
 			print("Package Syncing: Installing %s" % item)
-			package_manager.install_package(item)
+			manager.install_package(item)
 			print("Package Syncing: Installed %s by using Package Control" % item)
 
 		# check for removed packages
 		for item in to_remove:
 			print("Package Syncing: Removing %s" % item)
-			package_manager.remove_package(item)
+			manager.remove_package(item)
 			print("Package Syncing: Removed %s" % item)
-	except:
+	except Exception as e:
 		print("Package Syncing: Cannot load Package Controller")
 
 watcher_local = None
