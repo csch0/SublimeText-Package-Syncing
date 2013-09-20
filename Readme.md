@@ -4,6 +4,11 @@ Keep your different Sublime Test installations synchronised across different mac
 
 The package is using a different attempt rather than just build a link. It is basically syncing your user folder and you can define which files you would like to include in the sync. On the other hand you can also exclude files from the sync for example for platform depending settings or packages.
 
+## Functions
+
+- Synchronise your settings, keymaps, builds (adjust able via the settings)
+- Automatically install and remove packages between different machines
+
 ## Usage
 
 Dropbox is a great choice for syncing settings but other services like Google Drive, or SkyDrive are also working fine. Just pick your personal favourite.
