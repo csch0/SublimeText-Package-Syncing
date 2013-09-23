@@ -198,7 +198,8 @@ class Sync(threading.Thread):
         if item["type"] == "c":
 
             if not os.path.isdir(target_dir):
-                os.mkdir(target_dir)
+                os.makedirs(target_dir)
+                
             shutil.copy2(item["path"], target)
             log.info("Created %s" % target)
             if not log.isEnabledFor(logger.logging.INFO):
@@ -425,8 +426,10 @@ class Sync(threading.Thread):
         target_dir = os.path.dirname(target)
 
         if item["type"] == "c":
+
             if not os.path.isdir(target_dir):
-                os.mkdir(target_dir)
+                os.makedirs(target_dir)
+
             shutil.copy2(item["path"], target)
             log.info("Created %s" % target)
             if not log.isEnabledFor(logger.logging.INFO):
