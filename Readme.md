@@ -15,7 +15,7 @@ Dropbox is a great choice for syncing settings but other services like Google Dr
 
 ### First Machine
 
-On your first machine you just have to set a proper sync folder and Package Syncing will simple save all selected files in this folder.
+On your first machine you just have to set a proper sync folder and Package Syncing will simple save all selected files in this folder. Just select "Package Syncing: Define Sync Folder" from the command palette and select any dirctory on your computer, most likely this should be a folder in your Dropbox, GoogleDrive etc.
 
 ### Second Machine (or after a fresh installation)
 
@@ -37,7 +37,7 @@ Package Syncing will keep your settings up to date across different machines by 
 
 An example sync between two machines; on the top Sublime Text 3 on Windows (as virtual machine) and on the bottom on OS X.
 
-![SyncFolder](https://raw.github.com/wiki/Chris---/SublimeText-Package-Syncing/example.gif)
+![Example](https://raw.github.com/wiki/Chris---/SublimeText-Package-Syncing/example.gif)
 
 ## Installation
 
