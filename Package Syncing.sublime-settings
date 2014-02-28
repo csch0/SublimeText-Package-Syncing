@@ -12,6 +12,7 @@
 		"*.sublime-keymap",
 		"*.sublime-settings",
 		"*.sublime-snippet",
+		"*.sublime-macro",
 		"*.tmLanguage",
 		"*.tmTheme"
 	],
