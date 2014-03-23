@@ -21,7 +21,7 @@ On your first machine you just have to set a proper sync folder and Package Sync
 
 On your second machine please wait until all files are available and then you simple have to set the sync folder and Package Syncing will automatically pull all available files from that folder. This following message dialog should appear which you just have to confirm.
 
-![SyncFolder](https://raw.github.com/wiki/Chris---/SublimeText-Package-Syncing/sync_folder.jpg)
+![SyncFolder](https://raw.github.com/wiki/csch0/SublimeText-Package-Syncing/sync_folder.jpg)
 
 After a **restart** of Sublime Text Package Control will check for missing packages and install them automatically. From now on everything should work very smoothly.
 
@@ -37,7 +37,7 @@ Package Syncing will keep your settings up to date across different machines by 
 
 An example sync between two machines; on the top Sublime Text 3 on Windows (as virtual machine) and on the bottom on OS X.
 
-![Example](https://raw.github.com/wiki/Chris---/SublimeText-Package-Syncing/example.gif)
+![Example](https://raw.github.com/wiki/csch0/SublimeText-Package-Syncing/example.gif)
 
 ## Installation
 
@@ -58,9 +58,9 @@ An example sync between two machines; on the top Sublime Text 3 on Windows (as v
 
 Support this project via [gittip][] or [paypal][].
 
-[![Support via Gittip](https://rawgithub.com/chris---/Donation-Badges/master/gittip.jpeg)][gittip] [![Support via PayPal](https://rawgithub.com/chris---/Donation-Badges/master/paypal.jpeg)][paypal]
+[![Support via Gittip](https://rawgithub.com/csch0/Donation-Badges/master/gittip.jpeg)][gittip] [![Support via PayPal](https://rawgithub.com/csch0/Donation-Badges/master/paypal.jpeg)][paypal]
 
-[gittip]: https://www.gittip.com/Chris---
+[gittip]: https://www.gittip.com/csch0
 [paypal]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZWZCJPFSZNXEW
 
 ## License
