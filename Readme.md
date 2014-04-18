@@ -1,6 +1,6 @@
 # Package Syncing
 
-Keep your different Sublime Test installations synchronised across different machines. This idea of the package came by reading the article on [sublime.wbond.net](https://sublime.wbond.net/docs/syncing), so you could use the manual way or simple using this package. 
+Keep your different Sublime Text installations synchronised across different machines. This idea of the package came by reading the article on [sublime.wbond.net](https://sublime.wbond.net/docs/syncing), so you could use the manual way or simple using this package. 
 
 The package is using a different attempt rather than just build a link. It is basically syncing your user folder and you can define which files you would like to include in the sync. On the other hand you can also exclude files from the sync for example for platform depending settings or packages.
 
