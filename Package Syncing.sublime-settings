@@ -10,6 +10,7 @@
 		"*.sublime-commands",
 		"*.sublime-completions",
 		"*.sublime-keymap",
+		"*.sublime-menu",
 		"*.sublime-settings",
 		"*.sublime-snippet",
 		"*.sublime-macro",
