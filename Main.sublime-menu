@@ -1,5 +1,35 @@
 [
 	{
+		"caption": "Preferences",
+		"mnemonic": "n",
+		"id": "preferences",
+		"children":
+		[
+			{
+				"caption": "Package Settings",
+				"mnemonic": "P",
+				"id": "package-settings",
+				"children":
+				[
+					{
+						"caption": "Package Syncing",
+						"children":
+						[
+							{
+								"caption": "Settings – Default",
+								"command": "open_file", "args": { "file": "${packages}/Package Syncing/Package Syncing.sublime-settings" }
+							},
+							{
+								"caption": "Settings – User",
+								"command": "open_file", "args": { "file": "${packages}/User/Package Syncing.sublime-settings" }
+							}
+						]
+					}
+				]
+			}
+		]
+	},
+	{
 		"id": "tools",
 		"children":
 		[
@@ -36,7 +66,7 @@
 							},
 							{ "caption": "-" },
 							{
-								"caption": "Settings – Default", 
+								"caption": "Settings – Default",
 								"command": "open_file", "args": { "file": "${packages}/Package Syncing/Package Syncing.sublime-settings" }
 							},
 							{
